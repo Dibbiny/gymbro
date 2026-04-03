@@ -1,0 +1,301 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ExerciseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ExerciseCategory {
+  UPPER_BODY
+  LOWER_BODY
+  PULL
+  PUSH
+  LEGS
+}
+
+enum PlanVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum PostType {
+  TRAINING_DAY
+  PLAN_COMPLETION
+}
+
+enum FollowStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id               String   @id @default(cuid())
+  username         String   @unique
+  email            String   @unique
+  passwordHash     String
+  avatarUrl        String?
+  bio              String?
+  experiencePoints Int      @default(0)
+  role             Role     @default(USER)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  exercises         Exercise[]       @relation("SubmittedBy")
+  approvedExercises Exercise[]       @relation("ApprovedBy")
+  trainingPlans     TrainingPlan[]
+  planRatings       PlanRating[]
+  planEnrollments   PlanEnrollment[]
+  trainingSessions  TrainingSession[]
+  posts             Post[]
+  postLikes         PostLike[]
+  postComments      PostComment[]
+  announcements     Announcement[]
+  followers         Follow[]         @relation("Following")
+  following         Follow[]         @relation("Follower")
+
+  @@map("users")
+}
+
+model Exercise {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  category    ExerciseCategory
+  demoUrl     String?
+  status      ExerciseStatus   @default(PENDING)
+  createdAt   DateTime         @default(now())
+
+  submittedById String
+  submittedBy   User   @relation("SubmittedBy", fields: [submittedById], references: [id])
+
+  approvedById String?
+  approvedBy   User?    @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+
+  planDayExercises PlanDayExercise[]
+  setLogs          SetLog[]
+
+  @@index([status, category])
+  @@map("exercises")
+}
+
+model TrainingPlan {
+  id              String         @id @default(cuid())
+  title           String
+  description     String?
+  durationWeeks   Int
+  visibility      PlanVisibility @default(PRIVATE)
+  starRatingSum   Int            @default(0)
+  starRatingCount Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  creatorId String
+  creator   User   @relation(fields: [creatorId], references: [id])
+
+  planDays        PlanDay[]
+  planRatings     PlanRating[]
+  planEnrollments PlanEnrollment[]
+
+  @@map("training_plans")
+}
+
+model PlanDay {
+  id         String  @id @default(cuid())
+  dayOfWeek  Int     // 0=Mon, 6=Sun
+  weekNumber Int     // 1-based
+  label      String?
+
+  planId String
+  plan   TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  planDayExercises PlanDayExercise[]
+  trainingSessions TrainingSession[]
+
+  @@unique([planId, dayOfWeek, weekNumber])
+  @@map("plan_days")
+}
+
+model PlanDayExercise {
+  id          String @id @default(cuid())
+  orderIndex  Int
+  sets        Int
+  reps        Int
+  restSeconds Int
+
+  planDayId String
+  planDay   PlanDay @relation(fields: [planDayId], references: [id], onDelete: Cascade)
+
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@unique([planDayId, orderIndex])
+  @@map("plan_day_exercises")
+}
+
+model PlanRating {
+  id        String   @id @default(cuid())
+  rating    Int      // 1–5
+  createdAt DateTime @default(now())
+
+  planId String
+  plan   TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([planId, userId])
+  @@map("plan_ratings")
+}
+
+model PlanEnrollment {
+  id          String    @id @default(cuid())
+  startDate   DateTime
+  isActive    Boolean   @default(true)
+  completedAt DateTime?
+  enrolledAt  DateTime  @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  planId String
+  plan   TrainingPlan @relation(fields: [planId], references: [id])
+
+  trainingSessions TrainingSession[]
+  posts            Post[]
+
+  @@unique([userId, planId])
+  @@map("plan_enrollments")
+}
+
+model TrainingSession {
+  id             String    @id @default(cuid())
+  startedAt      DateTime  @default(now())
+  pausedDuration Int       @default(0) // total seconds paused
+  completedAt    DateTime?
+  notes          String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  enrollmentId String?
+  enrollment   PlanEnrollment? @relation(fields: [enrollmentId], references: [id])
+
+  planDayId String?
+  planDay   PlanDay? @relation(fields: [planDayId], references: [id])
+
+  setLogs SetLog[]
+  posts   Post[]
+
+  @@map("training_sessions")
+}
+
+model SetLog {
+  id            String   @id @default(cuid())
+  setNumber     Int
+  weightKg      Float?
+  repsCompleted Int
+  loggedAt      DateTime @default(now())
+
+  sessionId String
+  session   TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@index([sessionId, exerciseId])
+  @@map("set_logs")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  postType  PostType
+  body      String?
+  likeCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  sessionId String?
+  session   TrainingSession? @relation(fields: [sessionId], references: [id])
+
+  enrollmentId String?
+  enrollment   PlanEnrollment? @relation(fields: [enrollmentId], references: [id])
+
+  likes    PostLike[]
+  comments PostComment[]
+
+  @@map("posts")
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+  @@map("post_likes")
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  @@map("post_comments")
+}
+
+model Follow {
+  id        String       @id @default(cuid())
+  status    FollowStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  followerId String
+  follower   User   @relation("Follower", fields: [followerId], references: [id])
+
+  followingId String
+  following   User   @relation("Following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  @@map("announcements")
+}
