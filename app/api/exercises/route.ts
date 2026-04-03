@@ -6,7 +6,9 @@ import { z } from "zod";
 const createExerciseSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
+  demoUrl: z.string().url().max(500).optional(),
   category: z.enum(["UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"]),
+  autoApprove: z.boolean().optional(),
 });
 
 // GET /api/exercises — list exercises visible to current user
@@ -35,6 +37,7 @@ export async function GET(request: Request) {
       name: true,
       category: true,
       description: true,
+      demoUrl: true,
       status: true,
       submittedById: true,
     },
@@ -54,11 +57,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
+  const { autoApprove, ...data } = parsed.data;
+
+  // Only admins can auto-approve
+  const isAdmin = session.user.role === "ADMIN";
+  const status = autoApprove && isAdmin ? "APPROVED" : "PENDING";
+
   const exercise = await db.exercise.create({
     data: {
-      ...parsed.data,
+      ...data,
       submittedById: session.user.id,
-      status: "PENDING",
+      approvedById: status === "APPROVED" ? session.user.id : null,
+      status,
     },
   });
 

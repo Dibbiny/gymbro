@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "@/lib/time";
 import { ExerciseApprovalActions } from "@/components/admin/ExerciseApprovalActions";
+import { ExerciseSubmitForm } from "@/components/exercises/ExerciseSubmitForm";
 
 export default async function AdminExercisesPage() {
   const session = await auth();
@@ -29,6 +30,12 @@ export default async function AdminExercisesPage() {
 
   return (
     <div className="space-y-6">
+      {/* Add exercise directly */}
+      <section className="space-y-3">
+        <h2 className="font-semibold">Add exercise</h2>
+        <ExerciseSubmitForm autoApprove />
+      </section>
+
       {/* Pending */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">

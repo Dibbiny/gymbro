@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,12 +21,19 @@ const CATEGORY_LABELS: Record<string, string> = {
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
+  demoUrl: z.string().url("Must be a valid URL").max(500).optional().or(z.literal("")),
   category: z.enum(CATEGORIES, { error: "Select a category" }),
 });
 
 type FormData = z.infer<typeof schema>;
 
-export function ExerciseSubmitForm({ onSuccess }: { onSuccess?: () => void }) {
+interface Props {
+  /** When true, admin bypass: exercise is auto-approved */
+  autoApprove?: boolean;
+  onSuccess?: () => void;
+}
+
+export function ExerciseSubmitForm({ autoApprove, onSuccess }: Props) {
   const {
     register,
     handleSubmit,
@@ -43,14 +49,18 @@ export function ExerciseSubmitForm({ onSuccess }: { onSuccess?: () => void }) {
     const res = await fetch("/api/exercises", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        demoUrl: data.demoUrl || undefined,
+        autoApprove: autoApprove ?? false,
+      }),
     });
     const json = await res.json();
     if (!res.ok) {
       toast.error(json.error ?? "Failed to submit exercise");
       return;
     }
-    toast.success("Exercise submitted! It will appear in your list while pending admin approval.");
+    toast.success(autoApprove ? "Exercise added!" : "Exercise submitted for approval!");
     reset();
     onSuccess?.();
   }
@@ -64,7 +74,7 @@ export function ExerciseSubmitForm({ onSuccess }: { onSuccess?: () => void }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="ex-desc">Description (optional)</Label>
+        <Label htmlFor="ex-desc">Description <span className="text-muted-foreground font-normal">(optional)</span></Label>
         <textarea
           id="ex-desc"
           rows={2}
@@ -72,6 +82,12 @@ export function ExerciseSubmitForm({ onSuccess }: { onSuccess?: () => void }) {
           className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
           {...register("description")}
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="ex-demo">Demo URL <span className="text-muted-foreground font-normal">(optional)</span></Label>
+        <Input id="ex-demo" type="url" placeholder="https://youtube.com/..." {...register("demoUrl")} />
+        {errors.demoUrl && <p className="text-xs text-destructive">{errors.demoUrl.message}</p>}
       </div>
 
       <div className="space-y-2">
@@ -97,7 +113,9 @@ export function ExerciseSubmitForm({ onSuccess }: { onSuccess?: () => void }) {
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Submitting..." : "Submit for approval"}
+        {isSubmitting
+          ? "Submitting..."
+          : autoApprove ? "Add exercise" : "Submit for approval"}
       </Button>
     </form>
   );

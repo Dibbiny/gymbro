@@ -5,6 +5,7 @@ import { LogoutButton } from "@/components/profile/LogoutButton";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { Dumbbell } from "lucide-react";
 
 export default async function ProfileEditPage() {
   const session = await auth();
@@ -23,6 +24,14 @@ export default async function ProfileEditPage() {
         <h1 className="text-xl font-bold">Edit Profile</h1>
       </div>
       <ProfileEditForm user={user!} />
+      <Separator />
+      <Link
+        href="/exercises"
+        className="flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
+      >
+        <Dumbbell className="h-4 w-4" />
+        Submit an exercise
+      </Link>
       <Separator />
       <LogoutButton />
     </div>
