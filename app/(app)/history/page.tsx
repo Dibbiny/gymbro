@@ -149,7 +149,7 @@ export default async function HistoryPage({ searchParams }: Props) {
               } catch {}
 
               return (
-                <div key={s.id} className="rounded-xl border p-3.5 space-y-2">
+                <Link key={s.id} href={`/sessions/${s.id}`} className="block rounded-xl border p-3.5 space-y-2 hover:bg-muted/50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       {isRandomDay ? (
@@ -184,7 +184,7 @@ export default async function HistoryPage({ searchParams }: Props) {
                       </span>
                     )}
                   </div>
-                </div>
+                </Link>
               );
             })
           )}
