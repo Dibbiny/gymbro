@@ -67,9 +67,11 @@ export default async function TrainPage() {
             const completedDayIds = new Set(
               enrollment.trainingSessions.map((s) => s.planDayId).filter(Boolean)
             );
-            const trainingDays = plan.planDays.filter((d) => d.planDayExercises.length > 0);
-            const totalDays = trainingDays.length;
-            const completedDays = trainingDays.filter((d) => completedDayIds.has(d.id)).length;
+            const allTrainingDays = plan.planDays.filter((d) => d.planDayExercises.length > 0);
+            const totalDays = allTrainingDays.length;
+            const completedDays = allTrainingDays.filter((d) => completedDayIds.has(d.id)).length;
+            // Show only week 1 days as the representative week
+            const trainingDays = allTrainingDays.filter((d) => d.weekNumber === 1);
             const progressPct = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
 
             return (
