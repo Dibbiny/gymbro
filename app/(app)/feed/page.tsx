@@ -1,16 +1,24 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PostCard } from "@/components/feed/PostCard";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, Megaphone } from "lucide-react";
 import Link from "next/link";
 
 export default async function FeedPage() {
   const session = await auth();
 
-  const following = await db.follow.findMany({
-    where: { followerId: session!.user.id, status: "ACCEPTED" },
-    select: { followingId: true },
-  });
+  const [following, announcements] = await Promise.all([
+    db.follow.findMany({
+      where: { followerId: session!.user.id, status: "ACCEPTED" },
+      select: { followingId: true },
+    }),
+    db.announcement.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+    }),
+  ]);
+
   const followingIds = following.map((f: { followingId: string }) => f.followingId);
 
   const posts = await db.post.findMany({
@@ -35,6 +43,17 @@ export default async function FeedPage() {
 
   return (
     <div className="space-y-4">
+      {/* Announcements */}
+      {announcements.map((a) => (
+        <div key={a.id} className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 space-y-1">
+          <div className="flex items-center gap-1.5 text-primary">
+            <Megaphone className="h-4 w-4 shrink-0" />
+            <p className="text-sm font-semibold">{a.title}</p>
+          </div>
+          <p className="text-sm text-muted-foreground">{a.body}</p>
+        </div>
+      ))}
+
       {posts.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center space-y-2">
           <Dumbbell className="h-8 w-8 mx-auto text-muted-foreground" />
@@ -55,10 +74,7 @@ export default async function FeedPage() {
               ...post,
               createdAt: post.createdAt.toISOString(),
               session: post.session
-                ? {
-                    ...post.session,
-                    setLogs: post.session.setLogs,
-                  }
+                ? { ...post.session, setLogs: post.session.setLogs }
                 : null,
             }}
             currentUserId={session!.user.id}

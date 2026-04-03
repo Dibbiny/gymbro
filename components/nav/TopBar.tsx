@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession } from "next-auth/react";
 
@@ -32,6 +32,15 @@ export function TopBar({ pendingNotifications = 0 }: { pendingNotifications?: nu
       <div className="mx-auto max-w-lg flex items-center justify-between px-4 h-14">
         <span className="text-lg font-bold tracking-tight">{title}</span>
         <div className="flex items-center gap-2">
+          {session?.user?.role === "ADMIN" && (
+            <Link
+              href="/admin"
+              aria-label="Admin"
+              className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Shield className="h-5 w-5" />
+            </Link>
+          )}
           <Link
             href="/notifications"
             aria-label="Notifications"
