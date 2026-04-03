@@ -12,8 +12,9 @@ export async function POST(request: Request) {
   if (!file.type.startsWith("image/")) return NextResponse.json({ error: "Only images allowed" }, { status: 400 });
   if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: "Image must be under 5MB" }, { status: 400 });
 
+  const folder = (formData.get("folder") as string) ?? "posts";
   const ext = file.name.split(".").pop() ?? "jpg";
-  const filename = `posts/${session.user.id}/${Date.now()}.${ext}`;
+  const filename = `${folder}/${session.user.id}/${Date.now()}.${ext}`;
   const bytes = await file.arrayBuffer();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

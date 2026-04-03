@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Camera } from "lucide-react";
 
 interface Props {
   user: { username: string; bio: string | null; avatarUrl: string | null };
@@ -15,13 +15,35 @@ interface Props {
 export function ProfileEditForm({ user }: Props) {
   const router = useRouter();
   const [bio, setBio] = useState(user.bio ?? "");
-  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? "");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatarUrl);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
+      let avatarUrl: string | null = user.avatarUrl;
+
+      if (avatarFile) {
+        const fd = new FormData();
+        fd.append("file", avatarFile);
+        fd.append("folder", "avatars");
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
+        const uploadJson = await uploadRes.json();
+        if (!uploadRes.ok) { toast.error(uploadJson.error ?? "Image upload failed"); return; }
+        avatarUrl = uploadJson.url;
+      }
+
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -39,25 +61,31 @@ export function ProfileEditForm({ user }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Avatar preview */}
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16">
-          <AvatarImage src={avatarUrl || undefined} />
-          <AvatarFallback className="text-xl font-bold">
-            {user.username.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 space-y-1.5">
-          <Label htmlFor="avatarUrl">Avatar URL</Label>
-          <Input
-            id="avatarUrl"
-            type="url"
-            placeholder="https://..."
-            value={avatarUrl}
-            onChange={(e) => setAvatarUrl(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">Paste any public image URL</p>
+      {/* Avatar upload */}
+      <div className="flex flex-col items-center gap-3">
+        <div className="relative">
+          <Avatar className="h-24 w-24">
+            <AvatarImage src={avatarPreview ?? undefined} />
+            <AvatarFallback className="text-2xl font-bold">
+              {user.username.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute bottom-0 right-0 rounded-full bg-primary p-1.5 text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+          >
+            <Camera className="h-4 w-4" />
+          </button>
         </div>
+        <p className="text-xs text-muted-foreground">Tap the camera to change your photo</p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
       </div>
 
       <div className="space-y-1.5">
