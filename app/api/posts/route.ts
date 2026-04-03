@@ -5,6 +5,7 @@ import { z } from "zod";
 
 const createPostSchema = z.object({
   body: z.string().max(1000).optional(),
+  imageUrl: z.string().url().optional(),
   sessionId: z.string().optional(),
   enrollmentId: z.string().optional(),
   postType: z.enum(["TRAINING_DAY", "PLAN_COMPLETION"]),
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
     data: {
       authorId: session.user.id,
       body: parsed.data.body ?? null,
+      imageUrl: parsed.data.imageUrl ?? null,
       sessionId: parsed.data.sessionId ?? null,
       enrollmentId: parsed.data.enrollmentId ?? null,
       postType: parsed.data.postType,
