@@ -8,7 +8,7 @@ import { PostCard } from "@/components/feed/PostCard";
 import { FollowButton } from "@/components/social/FollowButton";
 import { xpToLevel } from "@/lib/xp";
 import { Progress } from "@/components/ui/progress";
-import { Dumbbell, Trophy, User, Pencil } from "lucide-react";
+import { Dumbbell, Trophy, User, Pencil, History } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -203,6 +203,12 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             <p className="text-lg font-bold">{user.experiencePoints}</p>
             <p className="text-xs text-muted-foreground">XP</p>
           </div>
+          {isSelf && (
+            <Link href="/history" className="hover:opacity-70 transition-opacity">
+              <p className="text-lg font-bold"><History className="h-5 w-5 mx-auto" /></p>
+              <p className="text-xs text-muted-foreground">History</p>
+            </Link>
+          )}
         </div>
 
         {/* Level */}
