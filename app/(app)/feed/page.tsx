@@ -15,12 +15,7 @@ export default async function FeedPage() {
 
   const posts = await db.post.findMany({
     where: {
-      OR: [
-        { authorId: session!.user.id },
-        { authorId: { in: followingIds } },
-        // Global discovery — show all posts
-        {},
-      ],
+      authorId: { in: [session!.user.id, ...followingIds] },
     },
     include: {
       author: { select: { id: true, username: true, avatarUrl: true } },

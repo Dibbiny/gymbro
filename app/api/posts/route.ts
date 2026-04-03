@@ -28,12 +28,7 @@ export async function GET(request: Request) {
 
   const posts = await db.post.findMany({
     where: {
-      OR: [
-        { authorId: session.user.id },
-        { authorId: { in: followingIds } },
-        // Also show public posts from everyone for discovery
-        { author: { role: "USER" } },
-      ],
+      authorId: { in: [session.user.id, ...followingIds] },
       ...(cursor
         ? {
             OR: [
