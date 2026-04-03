@@ -1,8 +1,10 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
+import { LogoutButton } from "@/components/profile/LogoutButton";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 
 export default async function ProfileEditPage() {
   const session = await auth();
@@ -21,6 +23,8 @@ export default async function ProfileEditPage() {
         <h1 className="text-xl font-bold">Edit Profile</h1>
       </div>
       <ProfileEditForm user={user!} />
+      <Separator />
+      <LogoutButton />
     </div>
   );
 }
