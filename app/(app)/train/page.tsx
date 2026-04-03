@@ -147,9 +147,42 @@ export default async function TrainPage() {
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground text-center py-2">
-                      Rest day today
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground text-center py-1">
+                        Rest day today
+                      </p>
+                      {/* Let user pick another day to train */}
+                      <div className="space-y-1.5">
+                        {plan.planDays
+                          .filter((d) => d.planDayExercises.length > 0)
+                          .map((day) => {
+                            const done = completedDayIds.has(day.id);
+                            return (
+                              <div key={day.id} className="flex items-center justify-between rounded-lg border px-3 py-2 gap-2">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {DAY_NAMES[day.dayOfWeek]}{day.label ? ` · ${day.label}` : ""}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {day.planDayExercises.length} exercises
+                                  </p>
+                                </div>
+                                {done ? (
+                                  <span className="flex items-center gap-1 text-xs text-primary font-medium shrink-0">
+                                    <CheckCircle2 className="h-3.5 w-3.5" /> Done
+                                  </span>
+                                ) : (
+                                  <StartSessionButton
+                                    enrollmentId={enrollment.id}
+                                    planDayId={day.id}
+                                    compact
+                                  />
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
                   )}
 
                   {/* Weekly schedule */}

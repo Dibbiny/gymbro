@@ -9,9 +9,10 @@ import { Play } from "lucide-react";
 interface Props {
   enrollmentId: string;
   planDayId: string;
+  compact?: boolean;
 }
 
-export function StartSessionButton({ enrollmentId, planDayId }: Props) {
+export function StartSessionButton({ enrollmentId, planDayId, compact }: Props) {
   const router = useRouter();
   const [isStarting, setIsStarting] = useState(false);
 
@@ -32,6 +33,15 @@ export function StartSessionButton({ enrollmentId, planDayId }: Props) {
     } finally {
       setIsStarting(false);
     }
+  }
+
+  if (compact) {
+    return (
+      <Button size="sm" className="h-8 px-3 shrink-0" onClick={handleStart} disabled={isStarting}>
+        <Play className="h-3.5 w-3.5 mr-1" />
+        {isStarting ? "..." : "Start"}
+      </Button>
+    );
   }
 
   return (
