@@ -20,6 +20,7 @@ interface Post {
   postType: string;
   body: string | null;
   imageUrl?: string | null;
+  sessionId?: string | null;
   likeCount: number;
   createdAt: string;
   author: { id: string; username: string; avatarUrl: string | null };
@@ -100,7 +101,10 @@ export function PostCard({ post, currentUserId }: { post: Post; currentUserId: s
 
       {/* Session summary */}
       {post.session && (
-        <div className="rounded-lg bg-muted/50 px-3 py-2 text-sm space-y-0.5">
+        <Link
+          href={post.sessionId ? `/sessions/${post.sessionId}` : "#"}
+          className="block rounded-lg bg-muted/50 px-3 py-2 text-sm space-y-0.5 hover:bg-muted transition-colors"
+        >
           {post.session.planDay && (
             <p className="font-medium">
               {post.session.planDay.label ?? DAY_NAMES[post.session.planDay.dayOfWeek]}
@@ -109,8 +113,8 @@ export function PostCard({ post, currentUserId }: { post: Post; currentUserId: s
           {post.enrollment && (
             <p className="text-xs text-muted-foreground">{post.enrollment.plan.title}</p>
           )}
-          <p className="text-xs text-muted-foreground">{setsCompleted} sets completed</p>
-        </div>
+          <p className="text-xs text-muted-foreground">{setsCompleted} sets completed · tap to view</p>
+        </Link>
       )}
 
       {post.postType === "PLAN_COMPLETION" && post.enrollment && (

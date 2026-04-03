@@ -73,6 +73,7 @@ export default async function FeedPage() {
             post={{
               ...post,
               createdAt: post.createdAt.toISOString(),
+              sessionId: post.sessionId,
               session: post.session
                 ? { ...post.session, setLogs: post.session.setLogs }
                 : null,

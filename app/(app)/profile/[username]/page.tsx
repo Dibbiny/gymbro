@@ -252,7 +252,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             {posts.map((post) => (
               <PostCard
                 key={post.id}
-                post={{ ...post, createdAt: post.createdAt.toISOString() }}
+                post={{ ...post, createdAt: post.createdAt.toISOString(), sessionId: post.sessionId }}
                 currentUserId={session!.user.id}
               />
             ))}
