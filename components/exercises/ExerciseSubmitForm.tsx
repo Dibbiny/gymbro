@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,9 +32,11 @@ interface Props {
   /** When true, admin bypass: exercise is auto-approved */
   autoApprove?: boolean;
   onSuccess?: () => void;
+  redirectOnSuccess?: string;
 }
 
-export function ExerciseSubmitForm({ autoApprove, onSuccess }: Props) {
+export function ExerciseSubmitForm({ autoApprove, onSuccess, redirectOnSuccess }: Props) {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -63,6 +66,7 @@ export function ExerciseSubmitForm({ autoApprove, onSuccess }: Props) {
     toast.success(autoApprove ? "Exercise added!" : "Exercise submitted for approval!");
     reset();
     onSuccess?.();
+    if (redirectOnSuccess) router.push(redirectOnSuccess);
   }
 
   return (
