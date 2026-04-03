@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "@/lib/time";
 import { ExerciseApprovalActions } from "@/components/admin/ExerciseApprovalActions";
+import { ExerciseAdminActions } from "@/components/admin/ExerciseAdminActions";
 import { ExerciseSubmitForm } from "@/components/exercises/ExerciseSubmitForm";
 
 export default async function AdminExercisesPage() {
@@ -78,12 +79,12 @@ export default async function AdminExercisesPage() {
         <h2 className="font-semibold text-sm text-muted-foreground">Approved ({approved.length})</h2>
         <div className="space-y-1.5">
           {approved.map((ex) => (
-            <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
-              <div>
+            <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2 gap-2">
+              <div className="min-w-0">
                 <span className="text-sm font-medium">{ex.name}</span>
                 <span className="text-xs text-muted-foreground ml-2">{ex.category}</span>
               </div>
-              <Badge variant="secondary" className="text-xs text-green-600">Approved</Badge>
+              <ExerciseAdminActions exercise={ex} />
             </div>
           ))}
         </div>
@@ -94,12 +95,12 @@ export default async function AdminExercisesPage() {
           <h2 className="font-semibold text-sm text-muted-foreground">Rejected ({rejected.length})</h2>
           <div className="space-y-1.5">
             {rejected.map((ex) => (
-              <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2 opacity-60">
-                <div>
+              <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2 gap-2 opacity-70">
+                <div className="min-w-0">
                   <span className="text-sm font-medium">{ex.name}</span>
                   <span className="text-xs text-muted-foreground ml-2">{ex.category}</span>
                 </div>
-                <Badge variant="outline" className="text-xs">Rejected</Badge>
+                <ExerciseAdminActions exercise={ex} />
               </div>
             ))}
           </div>
