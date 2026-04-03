@@ -79,6 +79,38 @@ export async function PATCH(
   return NextResponse.json({ session: updated });
 }
 
+// DELETE /api/sessions/[sessionId] — delete a completed session
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ sessionId: string }> }
+) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { sessionId } = await params;
+
+  const trainingSession = await db.trainingSession.findUnique({
+    where: { id: sessionId },
+    select: { userId: true, completedAt: true },
+  });
+
+  if (!trainingSession) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (trainingSession.userId !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  await db.$transaction(async (tx) => {
+    // Detach any posts that reference this session
+    await tx.post.updateMany({
+      where: { sessionId },
+      data: { sessionId: null },
+    });
+    await tx.trainingSession.delete({ where: { id: sessionId } });
+  });
+
+  return NextResponse.json({ success: true });
+}
+
 // POST /api/sessions/[sessionId]/complete — finish the session
 export async function POST(
   request: Request,

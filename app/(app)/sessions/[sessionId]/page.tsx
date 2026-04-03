@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Dumbbell, Clock } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "@/lib/time";
+import { DeleteSessionButton } from "@/components/training/DeleteSessionButton";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -92,7 +93,7 @@ export default async function SessionDetailPage({ params }: Props) {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Link href="/feed" className="text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/history" className="text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1 min-w-0">
@@ -101,6 +102,7 @@ export default async function SessionDetailPage({ params }: Props) {
             <p className="text-sm text-muted-foreground">{session.planDay.plan.title}</p>
           )}
         </div>
+        {isOwner && <DeleteSessionButton sessionId={sessionId} />}
       </div>
 
       {/* Meta */}
