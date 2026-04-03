@@ -2,11 +2,12 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Calendar, Users, Lock, Globe } from "lucide-react";
+import { ChevronLeft, Calendar, Users, Lock, Globe, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlanActions } from "@/components/plans/PlanActions";
+import { PlanOwnerActions } from "@/components/plans/PlanOwnerActions";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const CATEGORY_LABELS: Record<string, string> = {
@@ -90,6 +91,7 @@ export default async function PlanDetailPage({ params }: Props) {
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-xl font-bold flex-1 truncate">{plan.title}</h1>
+        {isOwner && <PlanOwnerActions planId={plan.id} />}
       </div>
 
       {/* Meta */}

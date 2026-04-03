@@ -59,16 +59,24 @@ type PlanForm = z.infer<typeof planSchema>;
 
 const STEPS = ["Details", "Training Days", "Review"];
 
-export function PlanBuilder() {
+interface Props {
+  planId?: string;
+  initialData?: PlanForm;
+}
+
+export function PlanBuilder({ planId, initialData }: Props) {
   const router = useRouter();
+  const isEditing = !!planId;
   const [step, setStep] = useState(0);
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [selectedDays, setSelectedDays] = useState<number[]>(
+    initialData?.days.map((d) => d.dayOfWeek) ?? []
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<PlanForm>({
     resolver: zodResolver(planSchema),
-    defaultValues: {
+    defaultValues: initialData ?? {
       title: "",
       description: "",
       durationWeeks: 4,
@@ -82,7 +90,6 @@ export function PlanBuilder() {
     name: "days",
   });
 
-  // Fetch available exercises
   useEffect(() => {
     fetch("/api/exercises")
       .then((r) => r.json())
@@ -95,18 +102,10 @@ export function PlanBuilder() {
         ? prev.filter((d) => d !== dayIndex)
         : [...prev, dayIndex].sort((a, b) => a - b);
 
-      // Sync form days array
       const currentDays = form.getValues("days");
       const updatedDays = next.map((d) => {
         const existing = currentDays.find((cd) => cd.dayOfWeek === d);
-        return (
-          existing ?? {
-            dayOfWeek: d,
-            weekNumber: 1,
-            label: "",
-            exercises: [],
-          }
-        );
+        return existing ?? { dayOfWeek: d, weekNumber: 1, label: "", exercises: [] };
       });
       replaceDays(updatedDays);
       return next;
@@ -116,18 +115,22 @@ export function PlanBuilder() {
   async function onSubmit(data: PlanForm) {
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/plans", {
-        method: "POST",
+      const url = isEditing ? `/api/plans/${planId}` : "/api/plans";
+      const method = isEditing ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json.error ?? "Failed to create plan");
+        toast.error(json.error ?? (isEditing ? "Failed to update plan" : "Failed to create plan"));
         return;
       }
-      toast.success("Plan created!");
-      router.push(`/plans/${json.plan.id}`);
+      toast.success(isEditing ? "Plan updated!" : "Plan created!");
+      router.push(`/plans/${isEditing ? planId : json.plan.id}`);
+      router.refresh();
     } finally {
       setIsSubmitting(false);
     }
@@ -151,17 +154,10 @@ export function PlanBuilder() {
             >
               {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
             </div>
-            <span
-              className={cn(
-                "text-sm",
-                i === step ? "font-semibold" : "text-muted-foreground"
-              )}
-            >
+            <span className={cn("text-sm", i === step ? "font-semibold" : "text-muted-foreground")}>
               {label}
             </span>
-            {i < STEPS.length - 1 && (
-              <div className="h-px w-6 bg-border" />
-            )}
+            {i < STEPS.length - 1 && <div className="h-px w-6 bg-border" />}
           </div>
         ))}
       </div>
@@ -273,9 +269,7 @@ export function PlanBuilder() {
                 {form.watch("description") && <p>{form.watch("description")}</p>}
                 <p>{form.watch("durationWeeks")} weeks · {form.watch("visibility") === "PUBLIC" ? "Public" : "Private"}</p>
                 <p>{selectedDays.length} training day{selectedDays.length !== 1 ? "s" : ""}: {selectedDays.map((d) => DAY_NAMES[d]).join(", ")}</p>
-                <p>
-                  {form.watch("days").reduce((sum, d) => sum + d.exercises.length, 0)} exercises total
-                </p>
+                <p>{form.watch("days").reduce((sum, d) => sum + d.exercises.length, 0)} exercises total</p>
               </CardContent>
             </Card>
           </div>
@@ -308,7 +302,9 @@ export function PlanBuilder() {
             </Button>
           ) : (
             <Button type="submit" className="flex-1" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create plan"}
+              {isSubmitting
+                ? isEditing ? "Saving..." : "Creating..."
+                : isEditing ? "Save changes" : "Create plan"}
             </Button>
           )}
         </div>
@@ -317,7 +313,6 @@ export function PlanBuilder() {
   );
 }
 
-// Sub-component: editor for a single training day
 function DayEditor({
   dayIdx,
   dayName,
@@ -343,13 +338,7 @@ function DayEditor({
 
   function addExercise(ex: Exercise) {
     if (fields.some((f) => f.exerciseId === ex.id)) return;
-    append({
-      exerciseId: ex.id,
-      orderIndex: fields.length,
-      sets: 3,
-      reps: 10,
-      restSeconds: 90,
-    });
+    append({ exerciseId: ex.id, orderIndex: fields.length, sets: 3, reps: 10, restSeconds: 90 });
   }
 
   return (
@@ -361,7 +350,6 @@ function DayEditor({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Category filter */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
           {["ALL", ...CATEGORIES].map((cat) => (
             <button
@@ -380,7 +368,6 @@ function DayEditor({
           ))}
         </div>
 
-        {/* Exercise picker */}
         <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
           {filtered.map((ex) => {
             const added = fields.some((f) => f.exerciseId === ex.id);
@@ -398,13 +385,12 @@ function DayEditor({
                 )}
               >
                 <div className="font-medium truncate">{ex.name}</div>
-                <div className="text-muted-foreground">{CATEGORY_LABELS[ex.category]}</div>
+                <div className="text-muted-foreground">{CATEGORY_LABELS[ex.category] ?? ex.category}</div>
               </button>
             );
           })}
         </div>
 
-        {/* Added exercises */}
         {fields.length > 0 && (
           <>
             <Separator />

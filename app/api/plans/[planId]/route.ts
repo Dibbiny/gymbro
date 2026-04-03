@@ -3,11 +3,27 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
+const exerciseEntrySchema = z.object({
+  exerciseId: z.string().min(1),
+  orderIndex: z.number(),
+  sets: z.number().int().min(1).max(100),
+  reps: z.number().int().min(1).max(1000),
+  restSeconds: z.number().int().min(0).max(600),
+});
+
+const planDaySchema = z.object({
+  dayOfWeek: z.number().int().min(0).max(6),
+  weekNumber: z.number().int().min(1),
+  label: z.string().max(50).optional(),
+  exercises: z.array(exerciseEntrySchema),
+});
+
 const updatePlanSchema = z.object({
-  title: z.string().min(1).max(100).optional(),
+  title: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
-  durationWeeks: z.number().int().min(1).max(52).optional(),
-  visibility: z.enum(["PUBLIC", "PRIVATE"]).optional(),
+  durationWeeks: z.number().int().min(1).max(52),
+  visibility: z.enum(["PUBLIC", "PRIVATE"]),
+  days: z.array(planDaySchema),
 });
 
 // GET /api/plans/[planId]
@@ -43,10 +59,8 @@ export async function GET(
 
   if (!plan) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Check visibility
   const isOwner = plan.creatorId === session.user.id;
   if (plan.visibility === "PRIVATE" && !isOwner) {
-    // Allow if requester is an accepted follower
     const follow = await db.follow.findUnique({
       where: {
         followerId_followingId: {
@@ -63,7 +77,7 @@ export async function GET(
   return NextResponse.json({ plan });
 }
 
-// PATCH /api/plans/[planId]
+// PATCH /api/plans/[planId] — full update (replaces days)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ planId: string }> }
@@ -89,9 +103,39 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const updated = await db.trainingPlan.update({
-    where: { id: planId },
-    data: parsed.data,
+  const { title, description, durationWeeks, visibility, days } = parsed.data;
+
+  const updated = await db.$transaction(async (tx) => {
+    // Update plan metadata
+    const updatedPlan = await tx.trainingPlan.update({
+      where: { id: planId },
+      data: { title, description, durationWeeks, visibility },
+    });
+
+    // Replace all plan days
+    await tx.planDay.deleteMany({ where: { planId } });
+
+    for (const day of days) {
+      await tx.planDay.create({
+        data: {
+          planId,
+          dayOfWeek: day.dayOfWeek,
+          weekNumber: day.weekNumber,
+          label: day.label ?? null,
+          planDayExercises: {
+            create: day.exercises.map((ex) => ({
+              exerciseId: ex.exerciseId,
+              orderIndex: ex.orderIndex,
+              sets: ex.sets,
+              reps: ex.reps,
+              restSeconds: ex.restSeconds,
+            })),
+          },
+        },
+      });
+    }
+
+    return updatedPlan;
   });
 
   return NextResponse.json({ plan: updated });
