@@ -7,8 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Dumbbell, Shuffle } from "lucide-react";
 
-const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 export default async function TrainPage() {
   const session = await auth();
 
@@ -24,6 +22,7 @@ export default async function TrainPage() {
                 orderBy: { orderIndex: "asc" },
               },
             },
+            orderBy: [{ weekNumber: "asc" }, { dayOfWeek: "asc" }],
           },
         },
       },
@@ -34,9 +33,6 @@ export default async function TrainPage() {
     },
     orderBy: { enrolledAt: "desc" },
   });
-
-  const today = new Date();
-  const todayDow = (today.getDay() + 6) % 7; // convert Sun=0 to Mon=0
 
   return (
     <div className="space-y-6">
@@ -68,39 +64,12 @@ export default async function TrainPage() {
         <div className="space-y-4">
           {enrollments.map((enrollment) => {
             const plan = enrollment.plan;
-            const startDate = new Date(enrollment.startDate);
-            const daysSinceStart = Math.floor(
-              (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-            );
-            const currentWeek = Math.min(
-              Math.floor(daysSinceStart / 7) + 1,
-              plan.durationWeeks
-            );
-
-            // Find today's training day
-            const todayDay = plan.planDays.find(
-              (d) => d.dayOfWeek === todayDow && d.weekNumber === currentWeek
-            ) ?? plan.planDays.find((d) => d.dayOfWeek === todayDow);
-
-            // Find next training day (for rest days): next dayOfWeek > today in current week,
-            // otherwise earliest day in next week
-            const daysWithExercises = plan.planDays.filter((d) => d.planDayExercises.length > 0);
-            const nextDay =
-              daysWithExercises
-                .filter((d) => d.weekNumber === currentWeek && d.dayOfWeek > todayDow)
-                .sort((a, b) => a.dayOfWeek - b.dayOfWeek)[0] ??
-              daysWithExercises
-                .filter((d) => d.weekNumber === Math.min(currentWeek + 1, plan.durationWeeks))
-                .sort((a, b) => a.dayOfWeek - b.dayOfWeek)[0] ??
-              daysWithExercises.sort((a, b) => a.dayOfWeek - b.dayOfWeek)[0];
-
             const completedDayIds = new Set(
               enrollment.trainingSessions.map((s) => s.planDayId).filter(Boolean)
             );
-            const todayDone = todayDay ? completedDayIds.has(todayDay.id) : false;
-
-            const totalDays = plan.planDays.length;
-            const completedDays = completedDayIds.size;
+            const trainingDays = plan.planDays.filter((d) => d.planDayExercises.length > 0);
+            const totalDays = trainingDays.length;
+            const completedDays = trainingDays.filter((d) => completedDayIds.has(d.id)).length;
             const progressPct = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
 
             return (
@@ -110,7 +79,7 @@ export default async function TrainPage() {
                     <CardTitle className="text-base">{plan.title}</CardTitle>
                     <div className="flex items-center gap-1 shrink-0">
                       <Badge variant="secondary" className="text-xs">
-                        Week {currentWeek}/{plan.durationWeeks}
+                        {plan.durationWeeks}w
                       </Badge>
                       <UnenrollButton planId={plan.id} planTitle={plan.title} />
                     </div>
@@ -126,98 +95,47 @@ export default async function TrainPage() {
                   </div>
                 </CardHeader>
 
-                <CardContent className="space-y-3">
-                  {/* Today's workout */}
-                  {todayDay ? (
-                    <div className="rounded-lg bg-muted/50 p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold">
-                          Today — {DAY_NAMES[todayDay.dayOfWeek]}
-                          {todayDay.label && ` · ${todayDay.label}`}
-                        </span>
-                        {todayDone && (
-                          <span className="flex items-center gap-1 text-xs text-primary font-medium">
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Done
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="space-y-0.5">
-                        {todayDay.planDayExercises.slice(0, 4).map((pde) => (
-                          <p key={pde.id} className="text-xs text-muted-foreground">
-                            {pde.exercise.name} — {pde.sets}×{pde.reps}
-                          </p>
-                        ))}
-                        {todayDay.planDayExercises.length > 4 && (
-                          <p className="text-xs text-muted-foreground">
-                            +{todayDay.planDayExercises.length - 4} more
-                          </p>
-                        )}
-                      </div>
-
-                      {!todayDone && (
-                        <StartSessionButton
-                          enrollmentId={enrollment.id}
-                          planDayId={todayDay.id}
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <div className="rounded-lg bg-muted/50 p-3 space-y-2">
-                      <p className="text-xs text-muted-foreground">Rest day today</p>
-                      {nextDay && (
-                        <>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold">
-                              Up next — {DAY_NAMES[nextDay.dayOfWeek]}
-                              {nextDay.label && ` · ${nextDay.label}`}
+                <CardContent className="space-y-2">
+                  {trainingDays.map((day) => {
+                    const done = completedDayIds.has(day.id);
+                    return (
+                      <div key={day.id} className="rounded-lg border px-3 py-2.5 space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold truncate">
+                              {day.label ?? `Week ${day.weekNumber} · Day ${day.dayOfWeek + 1}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {day.planDayExercises.length} exercises
+                            </p>
+                          </div>
+                          {done ? (
+                            <span className="flex items-center gap-1 text-xs text-primary font-medium shrink-0">
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Done
                             </span>
-                            {completedDayIds.has(nextDay.id) && (
-                              <span className="flex items-center gap-1 text-xs text-primary font-medium">
-                                <CheckCircle2 className="h-3.5 w-3.5" /> Done
-                              </span>
-                            )}
-                          </div>
-                          <div className="space-y-0.5">
-                            {nextDay.planDayExercises.slice(0, 4).map((pde) => (
-                              <p key={pde.id} className="text-xs text-muted-foreground">
-                                {pde.exercise.name} — {pde.sets}×{pde.reps}
-                              </p>
-                            ))}
-                            {nextDay.planDayExercises.length > 4 && (
-                              <p className="text-xs text-muted-foreground">
-                                +{nextDay.planDayExercises.length - 4} more
-                              </p>
-                            )}
-                          </div>
-                          {!completedDayIds.has(nextDay.id) && (
+                          ) : (
                             <StartSessionButton
                               enrollmentId={enrollment.id}
-                              planDayId={nextDay.id}
+                              planDayId={day.id}
+                              compact
                             />
                           )}
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Weekly schedule */}
-                  <div className="flex gap-1.5">
-                    {DAY_NAMES.map((name, i) => {
-                      const hasDay = plan.planDays.some((d) => d.dayOfWeek === i);
-                      const isToday = i === todayDow;
-                      return (
-                        <div
-                          key={i}
-                          className={`flex-1 text-center rounded-md py-1 text-[10px] font-medium
-                            ${isToday ? "ring-1 ring-primary" : ""}
-                            ${hasDay ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}
-                        >
-                          {name[0]}
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="space-y-0.5">
+                          {day.planDayExercises.slice(0, 3).map((pde) => (
+                            <p key={pde.id} className="text-xs text-muted-foreground">
+                              {pde.exercise.name} — {pde.sets}×{pde.reps}
+                            </p>
+                          ))}
+                          {day.planDayExercises.length > 3 && (
+                            <p className="text-xs text-muted-foreground">
+                              +{day.planDayExercises.length - 3} more
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
             );

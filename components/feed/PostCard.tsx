@@ -129,7 +129,7 @@ export function PostCard({ post, currentUserId }: { post: Post; currentUserId: s
       {/* Post image */}
       {post.imageUrl && (
         <div className="rounded-xl overflow-hidden">
-          <img src={post.imageUrl} alt="Post image" className="w-full object-cover max-h-72" />
+          <img src={post.imageUrl} alt="Post image" className="w-full object-contain max-h-[500px] bg-black" />
         </div>
       )}
 
