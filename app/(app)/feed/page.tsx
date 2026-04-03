@@ -11,7 +11,7 @@ export default async function FeedPage() {
     where: { followerId: session!.user.id, status: "ACCEPTED" },
     select: { followingId: true },
   });
-  const followingIds = following.map((f) => f.followingId);
+  const followingIds = following.map((f: { followingId: string }) => f.followingId);
 
   const posts = await db.post.findMany({
     where: {
