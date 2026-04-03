@@ -20,7 +20,7 @@ export default async function SessionPage({ params }: Props) {
           planDayExercises: {
             orderBy: { orderIndex: "asc" },
             include: {
-              exercise: { select: { id: true, name: true, category: true } },
+              exercise: { select: { id: true, name: true, category: true, description: true, demoUrl: true } },
             },
           },
         },
@@ -42,6 +42,8 @@ export default async function SessionPage({ params }: Props) {
       exerciseId: pde.exercise.id,
       exerciseName: pde.exercise.name,
       category: pde.exercise.category,
+      description: pde.exercise.description,
+      demoUrl: pde.exercise.demoUrl,
       sets: pde.sets,
       reps: pde.reps,
       restSeconds: pde.restSeconds,
@@ -61,13 +63,15 @@ export default async function SessionPage({ params }: Props) {
           }) => {
             const ex = await db.exercise.findUnique({
               where: { id: e.exerciseId },
-              select: { id: true, name: true, category: true },
+              select: { id: true, name: true, category: true, description: true, demoUrl: true },
             });
             return {
               planDayExerciseId: `random-${e.exerciseId}`,
               exerciseId: e.exerciseId,
               exerciseName: ex?.name ?? "Unknown",
               category: ex?.category ?? "UPPER_BODY",
+              description: ex?.description,
+              demoUrl: ex?.demoUrl,
               sets: e.sets,
               reps: e.reps,
               restSeconds: e.restSeconds,

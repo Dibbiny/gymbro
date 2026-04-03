@@ -9,6 +9,8 @@ export interface ExerciseEntry {
   reps: number;
   restSeconds: number;
   orderIndex: number;
+  description?: string | null;
+  demoUrl?: string | null;
 }
 
 export interface SetLogEntry {

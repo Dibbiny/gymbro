@@ -11,9 +11,28 @@ import { SetLogger } from "@/components/training/SetLogger";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Pause, Play, Flag, ChevronLeft, ChevronRight, Dumbbell } from "lucide-react";
+import { Pause, Play, Flag, ChevronLeft, ChevronRight, Dumbbell, Info } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { ShareWorkoutDialog } from "@/components/feed/ShareWorkoutDialog";
+
+function extractYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0];
+    if (u.hostname.includes("youtube.com")) {
+      if (u.pathname === "/watch") return u.searchParams.get("v");
+      const match = u.pathname.match(/\/(?:embed|shorts|v)\/([^/?]+)/);
+      if (match) return match[1];
+    }
+  } catch {}
+  return null;
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   UPPER_BODY: "Upper Body",
@@ -34,6 +53,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
   const router = useRouter();
   const [isFinishing, setIsFinishing] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [shareDialog, setShareDialog] = useState<{
     sessionId: string;
     enrollmentId?: string;
@@ -282,6 +302,44 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
         })}
       </div>
 
+      {/* Exercise info dialog */}
+      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+        <DialogContent className="max-w-sm w-full">
+          <DialogHeader>
+            <DialogTitle>{currentExercise.exerciseName}</DialogTitle>
+            <Badge variant="outline" className="w-fit text-xs mt-1">
+              {CATEGORY_LABELS[currentExercise.category]}
+            </Badge>
+          </DialogHeader>
+          <div className="space-y-4">
+            {currentExercise.description ? (
+              <p className="text-sm text-muted-foreground">{currentExercise.description}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">No description available</p>
+            )}
+            {currentExercise.demoUrl && (() => {
+              const ytId = extractYouTubeId(currentExercise.demoUrl);
+              return ytId ? (
+                <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${ytId}`}
+                    title={currentExercise.exerciseName}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                </div>
+              ) : (
+                <a href={currentExercise.demoUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                  View demo →
+                </a>
+              );
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Current exercise card */}
       <div className="rounded-xl border p-4 space-y-3">
         <div className="flex items-start justify-between">
@@ -291,9 +349,17 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
               {CATEGORY_LABELS[currentExercise.category]}
             </Badge>
           </div>
-          <span className="text-sm text-muted-foreground">
-            {currentExercise.sets} sets × {currentExercise.reps} reps
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setInfoOpen(true)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Info className="h-4 w-4" />
+            </button>
+            <span className="text-sm text-muted-foreground">
+              {currentExercise.sets} sets × {currentExercise.reps} reps
+            </span>
+          </div>
         </div>
 
         <Separator />
