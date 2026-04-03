@@ -8,16 +8,18 @@ import { PostCard } from "@/components/feed/PostCard";
 import { FollowButton } from "@/components/social/FollowButton";
 import { xpToLevel } from "@/lib/xp";
 import { Progress } from "@/components/ui/progress";
-import { Dumbbell, Trophy } from "lucide-react";
+import { Dumbbell, Trophy, User } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ list?: string }>;
 }
 
-export default async function ProfilePage({ params }: Props) {
+export default async function ProfilePage({ params, searchParams }: Props) {
   const session = await auth();
   const { username } = await params;
+  const { list } = await searchParams;
 
   const user = await db.user.findUnique({
     where: { username },
@@ -52,6 +54,81 @@ export default async function ProfilePage({ params }: Props) {
 
   const isFollowing = followStatus === "ACCEPTED";
   const canSeeFull = isSelf || isFollowing;
+
+  // Followers / following list view
+  if (list === "followers" || list === "following") {
+    const rows = list === "followers"
+      ? await db.follow.findMany({
+          where: { followingId: user.id, status: "ACCEPTED" },
+          select: {
+            follower: {
+              select: {
+                id: true, username: true, avatarUrl: true, experiencePoints: true,
+                followers: { where: { followerId: session!.user.id }, select: { status: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        }).then((r) => r.map((x) => x.follower))
+      : await db.follow.findMany({
+          where: { followerId: user.id, status: "ACCEPTED" },
+          select: {
+            following: {
+              select: {
+                id: true, username: true, avatarUrl: true, experiencePoints: true,
+                followers: { where: { followerId: session!.user.id }, select: { status: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        }).then((r) => r.map((x) => x.following));
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Link href={`/profile/${username}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            @{username}
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <h1 className="text-sm font-semibold capitalize">{list}</h1>
+        </div>
+
+        {rows.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-10 text-center space-y-2">
+            <User className="h-8 w-8 mx-auto text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">No {list} yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {rows.map((u) => {
+              const { level } = xpToLevel(u.experiencePoints);
+              const fs = u.followers[0]?.status ?? null;
+              return (
+                <div key={u.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+                  <Link href={`/profile/${u.username}`} className="flex-1 flex items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                      {u.avatarUrl ? (
+                        <img src={u.avatarUrl} alt={u.username} className="h-full w-full object-cover" />
+                      ) : (
+                        <User className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">@{u.username}</p>
+                      <p className="text-xs text-muted-foreground">Level {level}</p>
+                    </div>
+                  </Link>
+                  {u.id !== session!.user.id && (
+                    <FollowButton targetUserId={u.id} initialStatus={fs} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // Active enrollments (only visible to self + accepted followers)
   const activeEnrollments = canSeeFull
@@ -107,14 +184,14 @@ export default async function ProfilePage({ params }: Props) {
 
         {/* Stats row */}
         <div className="flex gap-4 text-center">
-          <div>
+          <Link href={`/profile/${username}?list=followers`} className="hover:opacity-70 transition-opacity">
             <p className="text-lg font-bold">{user._count.followers}</p>
             <p className="text-xs text-muted-foreground">Followers</p>
-          </div>
-          <div>
+          </Link>
+          <Link href={`/profile/${username}?list=following`} className="hover:opacity-70 transition-opacity">
             <p className="text-lg font-bold">{user._count.following}</p>
             <p className="text-xs text-muted-foreground">Following</p>
-          </div>
+          </Link>
           <div>
             <p className="text-lg font-bold">{user.experiencePoints}</p>
             <p className="text-xs text-muted-foreground">XP</p>

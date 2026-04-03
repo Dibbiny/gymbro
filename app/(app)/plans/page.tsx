@@ -22,6 +22,27 @@ export default async function PlansPage({ searchParams }: Props) {
       ? { durationWeeks: "asc" as const }
       : undefined;
 
+  const followingUsers = tab === "people"
+    ? await db.follow.findMany({
+        where: { followerId: session!.user.id, status: "ACCEPTED" },
+        select: {
+          following: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              experiencePoints: true,
+              followers: {
+                where: { followerId: session!.user.id },
+                select: { status: true },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }).then((rows) => rows.map((r) => r.following))
+    : [];
+
   const [plans, myPlans] = tab === "plans"
     ? await Promise.all([
         db.trainingPlan.findMany({
@@ -78,7 +99,7 @@ export default async function PlansPage({ searchParams }: Props) {
       </div>
 
       {tab === "people" ? (
-        <PeopleSearch />
+        <PeopleSearch initialUsers={followingUsers} />
       ) : (
         <>
           {/* My plans */}
