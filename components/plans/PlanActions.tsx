@@ -130,8 +130,7 @@ export function PlanActions({
       )}
 
       {/* Enroll / unenroll + clone */}
-      {!isOwner && (
-        <div className="flex gap-2">
+      <div className="flex gap-2">
           {isEnrolled ? (
             <Button variant="outline" size="sm" onClick={handleUnenroll} className="flex-1">
               <CheckCircle2 className="h-4 w-4 mr-1 text-primary" />
@@ -167,14 +166,13 @@ export function PlanActions({
             </>
           )}
 
-          {isPublic && (
+          {!isOwner && isPublic && (
             <Button variant="outline" size="sm" onClick={handleClone} disabled={isCloning}>
               <Copy className="h-4 w-4 mr-1" />
               {isCloning ? "Cloning..." : "Clone"}
             </Button>
           )}
         </div>
-      )}
     </div>
   );
 }
