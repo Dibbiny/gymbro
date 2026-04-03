@@ -161,6 +161,41 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  await db.trainingPlan.delete({ where: { id: planId } });
+  await db.$transaction(async (tx) => {
+    // Get all enrollments for this plan
+    const enrollments = await tx.planEnrollment.findMany({
+      where: { planId },
+      select: { id: true },
+    });
+    const enrollmentIds = enrollments.map((e) => e.id);
+
+    // Get all training sessions tied to these enrollments
+    const sessions = await tx.trainingSession.findMany({
+      where: { enrollmentId: { in: enrollmentIds } },
+      select: { id: true },
+    });
+    const sessionIds = sessions.map((s) => s.id);
+
+    // Delete posts referencing these sessions or enrollments (likes/comments cascade)
+    await tx.post.deleteMany({
+      where: { OR: [{ sessionId: { in: sessionIds } }, { enrollmentId: { in: enrollmentIds } }] },
+    });
+
+    // Delete set logs (cascade would handle this but be explicit)
+    await tx.setLog.deleteMany({ where: { sessionId: { in: sessionIds } } });
+
+    // Delete training sessions
+    await tx.trainingSession.deleteMany({ where: { enrollmentId: { in: enrollmentIds } } });
+
+    // Delete plan ratings
+    await tx.planRating.deleteMany({ where: { planId } });
+
+    // Delete enrollments
+    await tx.planEnrollment.deleteMany({ where: { planId } });
+
+    // Delete the plan (plan days + exercises cascade)
+    await tx.trainingPlan.delete({ where: { id: planId } });
+  });
+
   return NextResponse.json({ success: true });
 }
