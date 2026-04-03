@@ -8,7 +8,7 @@ import { PostCard } from "@/components/feed/PostCard";
 import { FollowButton } from "@/components/social/FollowButton";
 import { xpToLevel } from "@/lib/xp";
 import { Progress } from "@/components/ui/progress";
-import { Dumbbell, Trophy, User } from "lucide-react";
+import { Dumbbell, Trophy, User, Pencil } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -177,7 +177,14 @@ export default async function ProfilePage({ params, searchParams }: Props) {
               {user.bio && <p className="text-sm text-muted-foreground mt-0.5">{user.bio}</p>}
             </div>
           </div>
-          {!isSelf && (
+          {isSelf ? (
+            <Link
+              href="/profile/edit"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 h-8 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              <Pencil className="h-3.5 w-3.5" /> Edit
+            </Link>
+          ) : (
             <FollowButton targetUserId={user.id} initialStatus={followStatus} />
           )}
         </div>
