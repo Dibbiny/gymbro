@@ -4,11 +4,11 @@ import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Clock, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,8 +43,8 @@ function extractYouTubeId(url: string): string | null {
     if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0];
     if (u.hostname.includes("youtube.com")) {
       if (u.pathname === "/watch") return u.searchParams.get("v");
-      const embedMatch = u.pathname.match(/\/embed\/([^/?]+)/);
-      if (embedMatch) return embedMatch[1];
+      const match = u.pathname.match(/\/(?:embed|shorts|v)\/([^/?]+)/);
+      if (match) return match[1];
     }
   } catch {}
   return null;
@@ -152,17 +152,17 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
         )}
       </div>
 
-      {/* Detail sheet */}
-      <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
+      {/* Detail dialog */}
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-w-sm w-full">
           {selected && (
             <>
-              <SheetHeader className="pb-4">
-                <SheetTitle>{selected.name}</SheetTitle>
-                <Badge variant="outline" className="w-fit text-xs">
+              <DialogHeader>
+                <DialogTitle>{selected.name}</DialogTitle>
+                <Badge variant="outline" className="w-fit text-xs mt-1">
                   {CATEGORY_LABELS[selected.category] ?? selected.category}
                 </Badge>
-              </SheetHeader>
+              </DialogHeader>
 
               <div className="space-y-4">
                 {selected.description && (
@@ -194,8 +194,8 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
               </div>
             </>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
