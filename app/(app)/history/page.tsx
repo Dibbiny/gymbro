@@ -1,9 +1,10 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "@/lib/time";
-import { Calendar, Dumbbell, Clock, Trophy, Shuffle } from "lucide-react";
+import { Calendar, Dumbbell, Clock, Trophy, Shuffle, Download } from "lucide-react";
+import { ProgressCharts } from "@/components/history/ProgressCharts";
+import Link from "next/link";
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -26,11 +27,7 @@ export default async function HistoryPage({ searchParams }: Props) {
     db.trainingSession.findMany({
       where: { userId: session!.user.id, completedAt: { not: null } },
       include: {
-        planDay: {
-          include: {
-            plan: { select: { title: true } },
-          },
-        },
+        planDay: { include: { plan: { select: { title: true } } } },
         _count: { select: { setLogs: true } },
       },
       orderBy: { completedAt: "desc" },
@@ -38,26 +35,81 @@ export default async function HistoryPage({ searchParams }: Props) {
     }),
     db.planEnrollment.findMany({
       where: { userId: session!.user.id, completedAt: { not: null } },
-      include: {
-        plan: { select: { id: true, title: true, durationWeeks: true } },
-      },
+      include: { plan: { select: { id: true, title: true, durationWeeks: true } } },
       orderBy: { completedAt: "desc" },
     }),
   ]);
 
+  // For progress tab: exercises the user has logged
+  const exercisesLogged = tab === "progress"
+    ? await db.setLog.findMany({
+        where: { session: { userId: session!.user.id, completedAt: { not: null } } },
+        select: { exercise: { select: { id: true, name: true, category: true } } },
+        distinct: ["exerciseId"],
+        orderBy: { exercise: { name: "asc" } },
+      }).then((rows) => rows.map((r) => r.exercise))
+    : [];
+
+  // Weekly volume by muscle group (last 8 weeks)
+  const weeklyVolume: { week: string; [cat: string]: number | string }[] = [];
+  if (tab === "progress") {
+    const eightWeeksAgo = new Date();
+    eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
+
+    const allSets = await db.setLog.findMany({
+      where: {
+        session: {
+          userId: session!.user.id,
+          completedAt: { not: null, gte: eightWeeksAgo },
+        },
+      },
+      select: {
+        weightKg: true,
+        repsCompleted: true,
+        exercise: { select: { category: true } },
+        session: { select: { completedAt: true } },
+      },
+    });
+
+    const byWeek: Record<string, Record<string, number>> = {};
+    for (const s of allSets) {
+      const d = new Date(s.session.completedAt!);
+      const monday = new Date(d);
+      monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      const week = monday.toISOString().slice(0, 10);
+      if (!byWeek[week]) byWeek[week] = {};
+      const cat = s.exercise.category;
+      byWeek[week][cat] = (byWeek[week][cat] ?? 0) + (s.weightKg ?? 0) * s.repsCompleted;
+    }
+
+    for (const [week, cats] of Object.entries(byWeek).sort()) {
+      weeklyVolume.push({ week: week.slice(5), ...cats });
+    }
+  }
+
   const tabs = [
     { value: "sessions", label: "Sessions" },
     { value: "plans", label: "Completed Plans" },
+    { value: "progress", label: "Progress" },
   ];
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">History</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">History</h1>
+        <a
+          href="/api/history/export"
+          download
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 h-8 text-sm font-medium hover:bg-muted transition-colors"
+        >
+          <Download className="h-3.5 w-3.5" /> Export CSV
+        </a>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-2">
         {tabs.map((t) => (
-          <a
+          <Link
             key={t.value}
             href={`/history?tab=${t.value}`}
             className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
@@ -67,7 +119,7 @@ export default async function HistoryPage({ searchParams }: Props) {
             }`}
           >
             {t.label}
-          </a>
+          </Link>
         ))}
       </div>
 
@@ -97,10 +149,7 @@ export default async function HistoryPage({ searchParams }: Props) {
               } catch {}
 
               return (
-                <div
-                  key={s.id}
-                  className="rounded-xl border p-3.5 space-y-2"
-                >
+                <div key={s.id} className="rounded-xl border p-3.5 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       {isRandomDay ? (
@@ -112,8 +161,7 @@ export default async function HistoryPage({ searchParams }: Props) {
                         <p className="text-sm font-semibold">
                           {isRandomDay
                             ? "Random Day"
-                            : s.planDay?.label ??
-                              (s.planDay ? DAY_NAMES[s.planDay.dayOfWeek] : "Workout")}
+                            : s.planDay?.label ?? (s.planDay ? DAY_NAMES[s.planDay.dayOfWeek] : "Workout")}
                         </p>
                         {s.planDay?.plan && (
                           <p className="text-xs text-muted-foreground">{s.planDay.plan.title}</p>
@@ -124,7 +172,6 @@ export default async function HistoryPage({ searchParams }: Props) {
                       {s._count.setLogs} sets
                     </Badge>
                   </div>
-
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
@@ -170,6 +217,18 @@ export default async function HistoryPage({ searchParams }: Props) {
             ))
           )}
         </div>
+      )}
+
+      {/* Progress tab */}
+      {tab === "progress" && (
+        exercisesLogged.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-10 text-center space-y-2">
+            <Dumbbell className="h-8 w-8 mx-auto text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Complete some workouts to see progress charts</p>
+          </div>
+        ) : (
+          <ProgressCharts exercises={exercisesLogged} weeklyVolume={weeklyVolume} />
+        )
       )}
     </div>
   );
