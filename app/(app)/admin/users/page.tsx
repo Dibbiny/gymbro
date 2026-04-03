@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { xpToLevel } from "@/lib/xp";
 import { UserRoleToggle } from "@/components/admin/UserRoleToggle";
+import { UserDeleteButton } from "@/components/admin/UserDeleteButton";
 import { auth } from "@/lib/auth";
 
 export default async function AdminUsersPage() {
@@ -53,7 +54,10 @@ export default async function AdminUsersPage() {
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
                 {!isSelf && (
-                  <UserRoleToggle userId={user.id} currentRole={user.role} />
+                  <div className="flex gap-1.5 shrink-0">
+                    <UserRoleToggle userId={user.id} currentRole={user.role} />
+                    <UserDeleteButton userId={user.id} username={user.username} />
+                  </div>
                 )}
               </div>
               <div className="flex gap-3 text-xs text-muted-foreground">

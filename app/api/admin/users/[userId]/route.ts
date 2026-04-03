@@ -32,3 +32,22 @@ export async function PATCH(
 
   return NextResponse.json({ user });
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  const session = await auth();
+  if (!session || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { userId } = await params;
+
+  if (userId === session.user.id) {
+    return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 });
+  }
+
+  await db.user.delete({ where: { id: userId } });
+  return NextResponse.json({ success: true });
+}
