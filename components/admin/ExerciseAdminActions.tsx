@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
@@ -26,23 +26,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ["UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"] as const;
-const CATEGORY_LABELS: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
-
-type Category = typeof CATEGORIES[number];
+interface Category {
+  id: string;
+  name: string;
+}
 
 interface Exercise {
   id: string;
   name: string;
   description: string | null;
   demoUrl: string | null;
-  category: string;
+  categories: { id: string; name: string }[];
 }
 
 interface Props {
@@ -54,11 +48,28 @@ export function ExerciseAdminActions({ exercise }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
 
   const [name, setName] = useState(exercise.name);
   const [description, setDescription] = useState(exercise.description ?? "");
   const [demoUrl, setDemoUrl] = useState(exercise.demoUrl ?? "");
-  const [category, setCategory] = useState<Category>(exercise.category as Category);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    exercise.categories.map((c) => c.id)
+  );
+
+  useEffect(() => {
+    if (editOpen) {
+      fetch("/api/categories")
+        .then((r) => r.json())
+        .then((d) => setAvailableCategories(d.categories ?? []));
+    }
+  }, [editOpen]);
+
+  function toggleCategory(id: string) {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -66,7 +77,7 @@ export function ExerciseAdminActions({ exercise }: Props) {
       const res = await fetch(`/api/admin/exercises/${exercise.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, demoUrl, category }),
+        body: JSON.stringify({ name, description, demoUrl, categoryIds: selectedCategoryIds }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error ?? "Failed to save"); return; }
@@ -157,27 +168,27 @@ export function ExerciseAdminActions({ exercise }: Props) {
             </div>
 
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label>Categories</Label>
               <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((cat) => (
+                {availableCategories.map((cat) => (
                   <button
-                    key={cat}
+                    key={cat.id}
                     type="button"
-                    onClick={() => setCategory(cat)}
+                    onClick={() => toggleCategory(cat.id)}
                     className={cn(
                       "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                      category === cat
+                      selectedCategoryIds.includes(cat.id)
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
                     )}
                   >
-                    {CATEGORY_LABELS[cat]}
+                    {cat.name}
                   </button>
                 ))}
               </div>
             </div>
 
-            <Button className="w-full" onClick={handleSave} disabled={saving || !name.trim()}>
+            <Button className="w-full" onClick={handleSave} disabled={saving || !name.trim() || selectedCategoryIds.length === 0}>
               {saving ? "Saving..." : "Save changes"}
             </Button>
           </div>

@@ -10,7 +10,6 @@ import { TrendingUp, BarChart2 } from "lucide-react";
 interface Exercise {
   id: string;
   name: string;
-  category: string;
 }
 
 interface SetPoint {

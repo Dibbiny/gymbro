@@ -7,7 +7,7 @@ const createExerciseSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
   demoUrl: z.string().url().max(500).optional(),
-  category: z.enum(["UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"]),
+  categoryIds: z.array(z.string().min(1)).min(1, "Select at least one category"),
   autoApprove: z.boolean().optional(),
 });
 
@@ -16,26 +16,18 @@ export async function GET(request: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { searchParams } = new URL(request.url);
-  const category = searchParams.get("category");
-
   const exercises = await db.exercise.findMany({
     where: {
-      AND: [
-        category ? { category: category as never } : {},
-        {
-          OR: [
-            { status: "APPROVED" },
-            { status: "PENDING", submittedById: session.user.id },
-          ],
-        },
+      OR: [
+        { status: "APPROVED" },
+        { status: "PENDING", submittedById: session.user.id },
       ],
     },
     orderBy: [{ status: "asc" }, { name: "asc" }],
     select: {
       id: true,
       name: true,
-      category: true,
+      categories: { select: { id: true, name: true } },
       description: true,
       demoUrl: true,
       status: true,
@@ -57,7 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const { autoApprove, ...data } = parsed.data;
+  const { autoApprove, categoryIds, ...data } = parsed.data;
 
   // Only admins can auto-approve
   const isAdmin = session.user.role === "ADMIN";
@@ -65,10 +57,13 @@ export async function POST(request: Request) {
 
   const exercise = await db.exercise.create({
     data: {
-      ...data,
+      name: data.name,
+      description: data.description ?? null,
+      demoUrl: data.demoUrl || null,
       submittedById: session.user.id,
       approvedById: status === "APPROVED" ? session.user.id : null,
       status,
+      categories: { connect: categoryIds.map((id) => ({ id })) },
     },
   });
 

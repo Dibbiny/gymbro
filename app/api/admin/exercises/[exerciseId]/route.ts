@@ -11,7 +11,7 @@ const editSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
   demoUrl: z.string().url().max(500).optional().or(z.literal("")),
-  category: z.enum(["UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"]),
+  categoryIds: z.array(z.string()).min(1),
 });
 
 // PATCH — approve / reject
@@ -63,7 +63,9 @@ export async function PUT(
       name: parsed.data.name,
       description: parsed.data.description ?? null,
       demoUrl: parsed.data.demoUrl || null,
-      category: parsed.data.category,
+      categories: {
+        set: parsed.data.categoryIds.map((id) => ({ id })),
+      },
     },
   });
 

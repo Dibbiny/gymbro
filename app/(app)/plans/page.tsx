@@ -54,7 +54,7 @@ export default async function PlansPage({ searchParams }: Props) {
           ],
         },
         orderBy: [{ status: "asc" }, { name: "asc" }],
-        select: { id: true, name: true, category: true, description: true, demoUrl: true, status: true, submittedById: true },
+        select: { id: true, name: true, categories: { select: { id: true, name: true } }, description: true, demoUrl: true, status: true, submittedById: true },
       })
     : [];
 

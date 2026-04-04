@@ -4,6 +4,14 @@ import { db } from "@/lib/db";
 import { z } from "zod";
 import { generateRandomDay, FocusType } from "@/lib/random-day";
 
+const FOCUS_TO_CATEGORY: Record<string, string> = {
+  UPPER_BODY: "Upper Body",
+  LOWER_BODY: "Lower Body",
+  PULL: "Pull",
+  PUSH: "Push",
+  LEGS: "Legs",
+};
+
 const generateSchema = z.object({
   focus: z.enum(["FULL_BODY", "UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"]),
   totalSets: z.number().int().min(3).max(60),
@@ -28,9 +36,9 @@ export async function POST(request: Request) {
         { status: "APPROVED" },
         { status: "PENDING", submittedById: session.user.id },
       ],
-      ...(focus !== "FULL_BODY" ? { category: focus as never } : {}),
+      ...(focus !== "FULL_BODY" ? { categories: { some: { name: FOCUS_TO_CATEGORY[focus] } } } : {}),
     },
-    select: { id: true, name: true, category: true },
+    select: { id: true, name: true, categories: { select: { name: true } } },
   });
 
   const generated = generateRandomDay(exercises, focus as FocusType, totalSets);

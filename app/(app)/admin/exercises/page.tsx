@@ -5,32 +5,49 @@ import { formatDistanceToNow } from "@/lib/time";
 import { ExerciseApprovalActions } from "@/components/admin/ExerciseApprovalActions";
 import { ExerciseAdminActions } from "@/components/admin/ExerciseAdminActions";
 import { ExerciseSubmitForm } from "@/components/exercises/ExerciseSubmitForm";
+import { CategoryManager } from "@/components/admin/CategoryManager";
 
 export default async function AdminExercisesPage() {
   const session = await auth();
 
-  const [pending, approved, rejected] = await Promise.all([
+  const [pending, approved, rejected, categories] = await Promise.all([
     db.exercise.findMany({
       where: { status: "PENDING" },
-      include: { submittedBy: { select: { username: true } } },
+      include: {
+        submittedBy: { select: { username: true } },
+        categories: { select: { id: true, name: true } },
+      },
       orderBy: { createdAt: "asc" },
     }),
     db.exercise.findMany({
       where: { status: "APPROVED" },
-      include: { submittedBy: { select: { username: true } } },
+      include: {
+        submittedBy: { select: { username: true } },
+        categories: { select: { id: true, name: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 30,
     }),
     db.exercise.findMany({
       where: { status: "REJECTED" },
-      include: { submittedBy: { select: { username: true } } },
+      include: {
+        submittedBy: { select: { username: true } },
+        categories: { select: { id: true, name: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
+    db.category.findMany({ orderBy: { name: "asc" } }),
   ]);
 
   return (
     <div className="space-y-6">
+      {/* Category management */}
+      <section className="space-y-3">
+        <h2 className="font-semibold">Manage Categories</h2>
+        <CategoryManager initialCategories={categories} />
+      </section>
+
       {/* Add exercise directly */}
       <section className="space-y-3">
         <h2 className="font-semibold">Add exercise</h2>
@@ -55,7 +72,7 @@ export default async function AdminExercisesPage() {
                   <div className="min-w-0">
                     <p className="font-semibold text-sm">{ex.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {ex.category} · by @{ex.submittedBy.username} · {formatDistanceToNow(new Date(ex.createdAt))}
+                      {ex.categories.map((c) => c.name).join(", ")} · by @{ex.submittedBy.username} · {formatDistanceToNow(new Date(ex.createdAt))}
                     </p>
                     {ex.description && (
                       <p className="text-xs text-muted-foreground mt-1">{ex.description}</p>
@@ -82,7 +99,7 @@ export default async function AdminExercisesPage() {
             <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2 gap-2">
               <div className="min-w-0">
                 <span className="text-sm font-medium">{ex.name}</span>
-                <span className="text-xs text-muted-foreground ml-2">{ex.category}</span>
+                <span className="text-xs text-muted-foreground ml-2">{ex.categories.map((c) => c.name).join(", ")}</span>
               </div>
               <ExerciseAdminActions exercise={ex} />
             </div>
@@ -98,7 +115,7 @@ export default async function AdminExercisesPage() {
               <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2 gap-2 opacity-70">
                 <div className="min-w-0">
                   <span className="text-sm font-medium">{ex.name}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{ex.category}</span>
+                  <span className="text-xs text-muted-foreground ml-2">{ex.categories.map((c) => c.name).join(", ")}</span>
                 </div>
                 <ExerciseAdminActions exercise={ex} />
               </div>

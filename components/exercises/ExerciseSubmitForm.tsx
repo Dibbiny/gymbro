@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,20 +11,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ["UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"] as const;
-const CATEGORY_LABELS: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
+interface Category {
+  id: string;
+  name: string;
+}
 
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
   demoUrl: z.string().url("Must be a valid URL").max(500).optional().or(z.literal("")),
-  category: z.enum(CATEGORIES, { error: "Select a category" }),
+  categoryIds: z.array(z.string()).min(1, "Select at least one category"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -37,16 +34,30 @@ interface Props {
 
 export function ExerciseSubmitForm({ autoApprove, onSuccess, redirectOnSuccess }: Props) {
   const router = useRouter();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const selectedCategory = watch("category");
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((d) => setCategories(d.categories ?? []));
+  }, []);
+
+  function toggleCategory(id: string) {
+    setSelectedCategoryIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id];
+      setValue("categoryIds", next);
+      return next;
+    });
+  }
 
   async function onSubmit(data: FormData) {
     const res = await fetch("/api/exercises", {
@@ -65,6 +76,7 @@ export function ExerciseSubmitForm({ autoApprove, onSuccess, redirectOnSuccess }
     }
     toast.success(autoApprove ? "Exercise added!" : "Exercise submitted for approval!");
     reset();
+    setSelectedCategoryIds([]);
     onSuccess?.();
     if (redirectOnSuccess) router.push(redirectOnSuccess);
   }
@@ -95,25 +107,25 @@ export function ExerciseSubmitForm({ autoApprove, onSuccess, redirectOnSuccess }
       </div>
 
       <div className="space-y-2">
-        <Label>Category</Label>
+        <Label>Categories</Label>
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
-              key={cat}
+              key={cat.id}
               type="button"
-              onClick={() => setValue("category", cat)}
+              onClick={() => toggleCategory(cat.id)}
               className={cn(
                 "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                selectedCategory === cat
+                selectedCategoryIds.includes(cat.id)
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
-              {CATEGORY_LABELS[cat]}
+              {cat.name}
             </button>
           ))}
         </div>
-        {errors.category && <p className="text-xs text-destructive">{errors.category.message}</p>}
+        {errors.categoryIds && <p className="text-xs text-destructive">{errors.categoryIds.message}</p>}
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>

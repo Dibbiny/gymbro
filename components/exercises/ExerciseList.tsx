@@ -12,21 +12,10 @@ import {
 import { Clock, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ["UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"] as const;
-const CATEGORY_LABELS: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
-
-type Category = typeof CATEGORIES[number];
-
 interface Exercise {
   id: string;
   name: string;
-  category: string;
+  categories: { id: string; name: string }[];
   description: string | null;
   demoUrl: string | null;
   status: string;
@@ -52,14 +41,27 @@ function extractYouTubeId(url: string): string | null {
 
 export function ExerciseList({ exercises, pendingExercises }: Props) {
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<Category | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [selected, setSelected] = useState<Exercise | null>(null);
+
+  // Derive unique categories from exercises
+  const allCategories = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ex of exercises) {
+      for (const cat of ex.categories) {
+        map.set(cat.id, cat.name);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [exercises]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return exercises.filter((ex) => {
       const matchesSearch = !q || ex.name.toLowerCase().includes(q) || ex.description?.toLowerCase().includes(q);
-      const matchesCategory = !categoryFilter || ex.category === categoryFilter;
+      const matchesCategory = categoryFilter === null || ex.categories.some((c) => c.id === categoryFilter);
       return matchesSearch && matchesCategory;
     });
   }, [exercises, search, categoryFilter]);
@@ -98,16 +100,16 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
           >
             All
           </button>
-          {CATEGORIES.map((cat) => (
+          {allCategories.map((cat) => (
             <button
-              key={cat}
-              onClick={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
+              key={cat.id}
+              onClick={() => setCategoryFilter(categoryFilter === cat.id ? null : cat.id)}
               className={cn(
                 "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                categoryFilter === cat ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                categoryFilter === cat.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
-              {CATEGORY_LABELS[cat]}
+              {cat.name}
             </button>
           ))}
         </div>
@@ -123,7 +125,7 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
             <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2 opacity-60">
               <div>
                 <p className="text-sm font-medium">{ex.name}</p>
-                <p className="text-xs text-muted-foreground">{CATEGORY_LABELS[ex.category] ?? ex.category}</p>
+                <p className="text-xs text-muted-foreground">{ex.categories.map((c) => c.name).join(", ")}</p>
               </div>
               <Badge variant="secondary" className="text-xs">Pending</Badge>
             </div>
@@ -145,7 +147,7 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
             >
               <p className="text-sm font-medium">{ex.name}</p>
               <Badge variant="outline" className="text-xs shrink-0">
-                {CATEGORY_LABELS[ex.category] ?? ex.category}
+                {ex.categories.map((c) => c.name).join(", ")}
               </Badge>
             </button>
           ))
@@ -160,7 +162,7 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
               <DialogHeader>
                 <DialogTitle>{selected.name}</DialogTitle>
                 <Badge variant="outline" className="w-fit text-xs mt-1">
-                  {CATEGORY_LABELS[selected.category] ?? selected.category}
+                  {selected.categories.map((c) => c.name).join(", ")}
                 </Badge>
               </DialogHeader>
 

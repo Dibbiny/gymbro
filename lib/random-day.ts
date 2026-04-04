@@ -1,17 +1,15 @@
-import { ExerciseCategory } from "@prisma/client";
-
 export type FocusType = "FULL_BODY" | "UPPER_BODY" | "LOWER_BODY" | "PULL" | "PUSH" | "LEGS";
 
 interface ExerciseRow {
   id: string;
   name: string;
-  category: ExerciseCategory;
+  categories: { name: string }[];
 }
 
 interface GeneratedExercise {
   exerciseId: string;
   exerciseName: string;
-  category: string;
+  categories: string[];
   sets: number;
   reps: number;
   restSeconds: number;
@@ -42,10 +40,11 @@ export function generateRandomDay(
 
   if (focus === "FULL_BODY") {
     // Sample from all categories proportionally
-    const byCategory = new Map<ExerciseCategory, ExerciseRow[]>();
+    const byCategory = new Map<string, ExerciseRow[]>();
     for (const ex of exercises) {
-      if (!byCategory.has(ex.category)) byCategory.set(ex.category, []);
-      byCategory.get(ex.category)!.push(ex);
+      const catName = ex.categories[0]?.name ?? "Other";
+      if (!byCategory.has(catName)) byCategory.set(catName, []);
+      byCategory.get(catName)!.push(ex);
     }
     // Pick up to 2 exercises from each category
     const selected: ExerciseRow[] = [];
@@ -54,7 +53,7 @@ export function generateRandomDay(
     }
     pool = shuffle(selected);
   } else {
-    pool = shuffle(exercises.filter((e) => e.category === (focus as ExerciseCategory)));
+    pool = shuffle(exercises);
   }
 
   if (pool.length === 0) return [];
@@ -76,7 +75,7 @@ export function generateRandomDay(
     result.push({
       exerciseId: ex.id,
       exerciseName: ex.name,
-      category: ex.category,
+      categories: ex.categories.map((c) => c.name),
       sets,
       reps: randInt(8, 12),
       restSeconds: 90,

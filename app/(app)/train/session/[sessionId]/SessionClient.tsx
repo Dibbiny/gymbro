@@ -34,14 +34,6 @@ function extractYouTubeId(url: string): string | null {
   return null;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
-
 interface Props {
   sessionId: string;
   exercises: ExerciseEntry[];
@@ -308,7 +300,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
           <DialogHeader>
             <DialogTitle>{currentExercise.exerciseName}</DialogTitle>
             <Badge variant="outline" className="w-fit text-xs mt-1">
-              {CATEGORY_LABELS[currentExercise.category]}
+              {currentExercise.categories.join(", ")}
             </Badge>
           </DialogHeader>
           <div className="space-y-4">
@@ -346,7 +338,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
           <div>
             <h2 className="text-lg font-bold">{currentExercise.exerciseName}</h2>
             <Badge variant="secondary" className="text-xs mt-0.5">
-              {CATEGORY_LABELS[currentExercise.category]}
+              {currentExercise.categories.join(", ")}
             </Badge>
           </div>
           <div className="flex items-center gap-2">

@@ -14,7 +14,7 @@ export async function GET() {
       weightKg: true,
       repsCompleted: true,
       setNumber: true,
-      exercise: { select: { name: true, category: true } },
+      exercise: { select: { name: true, categories: { select: { name: true } } } },
       session: {
         select: {
           completedAt: true,
@@ -29,7 +29,7 @@ export async function GET() {
   });
 
   const rows = [
-    ["Date", "Plan", "Day", "Exercise", "Category", "Set", "Weight (kg)", "Reps", "Volume"],
+    ["Date", "Plan", "Day", "Exercise", "Categories", "Set", "Weight (kg)", "Reps", "Volume"],
     ...sets.map((s) => {
       const weight = s.weightKg ?? 0;
       return [
@@ -37,7 +37,7 @@ export async function GET() {
         s.session.planDay?.plan?.title ?? "Random Day",
         s.session.planDay?.label ?? "",
         s.exercise.name,
-        s.exercise.category,
+        s.exercise.categories.map((c) => c.name).join("; "),
         String(s.setNumber),
         String(weight),
         String(s.repsCompleted),

@@ -24,18 +24,10 @@ const FOCUS_OPTIONS: { value: Focus; label: string; description: string }[] = [
 
 const SET_OPTIONS = [9, 12, 15, 18, 21, 24];
 
-const CATEGORY_LABELS: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
-
 interface GeneratedExercise {
   exerciseId: string;
   exerciseName: string;
-  category: string;
+  categories: string[];
   sets: number;
   reps: number;
   restSeconds: number;
@@ -175,7 +167,7 @@ export default function RandomDayPage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold">{ex.exerciseName}</p>
-                        <p className="text-xs text-muted-foreground">{CATEGORY_LABELS[ex.category]}</p>
+                        <p className="text-xs text-muted-foreground">{ex.categories.join(", ")}</p>
                       </div>
                     </div>
                     <div className="text-right text-xs text-muted-foreground">

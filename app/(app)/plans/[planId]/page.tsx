@@ -10,13 +10,6 @@ import { PlanActions } from "@/components/plans/PlanActions";
 import { PlanOwnerActions } from "@/components/plans/PlanOwnerActions";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const CATEGORY_LABELS: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
 
 interface Props {
   params: Promise<{ planId: string }>;
@@ -35,7 +28,7 @@ export default async function PlanDetailPage({ params }: Props) {
         include: {
           planDayExercises: {
             orderBy: { orderIndex: "asc" },
-            include: { exercise: { select: { id: true, name: true, category: true } } },
+            include: { exercise: { select: { id: true, name: true, categories: { select: { name: true } } } } },
           },
         },
       },
@@ -168,7 +161,7 @@ export default async function PlanDetailPage({ params }: Props) {
                         <div>
                           <span className="font-medium">{pde.exercise.name}</span>
                           <Badge variant="outline" className="ml-1.5 text-[10px] py-0">
-                            {CATEGORY_LABELS[pde.exercise.category]}
+                            {pde.exercise.categories.map((c) => c.name).join(", ")}
                           </Badge>
                         </div>
                         <span className="text-xs text-muted-foreground shrink-0 ml-2">

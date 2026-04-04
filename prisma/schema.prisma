@@ -17,14 +17,6 @@ enum ExerciseStatus {
   REJECTED
 }
 
-enum ExerciseCategory {
-  UPPER_BODY
-  LOWER_BODY
-  PULL
-  PUSH
-  LEGS
-}
-
 enum PlanVisibility {
   PUBLIC
   PRIVATE
@@ -70,13 +62,12 @@ model User {
 }
 
 model Exercise {
-  id          String           @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
   description String?
-  category    ExerciseCategory
   demoUrl     String?
-  status      ExerciseStatus   @default(PENDING)
-  createdAt   DateTime         @default(now())
+  status      ExerciseStatus @default(PENDING)
+  createdAt   DateTime       @default(now())
 
   submittedById String
   submittedBy   User   @relation("SubmittedBy", fields: [submittedById], references: [id])
@@ -87,9 +78,18 @@ model Exercise {
 
   planDayExercises PlanDayExercise[]
   setLogs          SetLog[]
+  categories       Category[]
 
-  @@index([status, category])
+  @@index([status])
   @@map("exercises")
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  exercises Exercise[]
+  @@map("categories")
 }
 
 model TrainingPlan {

@@ -16,19 +16,16 @@ import { Plus, Trash2, ChevronLeft, ChevronRight, Check, Dumbbell } from "lucide
 import { cn } from "@/lib/utils";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const CATEGORIES = ["UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"] as const;
-const CATEGORY_LABELS: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 interface Exercise {
   id: string;
   name: string;
-  category: string;
+  categories: { name: string }[];
   status: string;
 }
 
@@ -69,6 +66,7 @@ export function PlanBuilder({ planId, initialData }: Props) {
   const isEditing = !!planId;
   const [step, setStep] = useState(0);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedDays, setSelectedDays] = useState<number[]>(
     initialData?.days.map((d) => d.dayOfWeek) ?? []
   );
@@ -94,6 +92,9 @@ export function PlanBuilder({ planId, initialData }: Props) {
     fetch("/api/exercises")
       .then((r) => r.json())
       .then((d) => setExercises(d.exercises ?? []));
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((d) => setCategories(d.categories ?? []));
   }, []);
 
   function toggleDay(dayIndex: number) {
@@ -253,6 +254,7 @@ export function PlanBuilder({ planId, initialData }: Props) {
                 dayName={DAY_NAMES[dayField.dayOfWeek]}
                 form={form}
                 exercises={exercises}
+                categories={categories}
               />
             ))}
           </div>
@@ -318,11 +320,13 @@ function DayEditor({
   dayName,
   form,
   exercises,
+  categories,
 }: {
   dayIdx: number;
   dayName: string;
   form: UseFormReturn<PlanForm>;
   exercises: Exercise[];
+  categories: Category[];
 }) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -334,7 +338,7 @@ function DayEditor({
   const filtered =
     categoryFilter === "ALL"
       ? exercises
-      : exercises.filter((e) => e.category === categoryFilter);
+      : exercises.filter((e) => e.categories.some((c) => c.name === categoryFilter));
 
   function addExercise(ex: Exercise) {
     if (fields.some((f) => f.exerciseId === ex.id)) return;
@@ -351,7 +355,7 @@ function DayEditor({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-          {["ALL", ...CATEGORIES].map((cat) => (
+          {["ALL", ...categories.map((c) => c.name)].map((cat) => (
             <button
               key={cat}
               type="button"
@@ -363,7 +367,7 @@ function DayEditor({
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
-              {cat === "ALL" ? "All" : CATEGORY_LABELS[cat]}
+              {cat === "ALL" ? "All" : cat}
             </button>
           ))}
         </div>
@@ -385,7 +389,7 @@ function DayEditor({
                 )}
               >
                 <div className="font-medium truncate">{ex.name}</div>
-                <div className="text-muted-foreground">{CATEGORY_LABELS[ex.category] ?? ex.category}</div>
+                <div className="text-muted-foreground">{ex.categories.map((c) => c.name).join(", ")}</div>
               </button>
             );
           })}

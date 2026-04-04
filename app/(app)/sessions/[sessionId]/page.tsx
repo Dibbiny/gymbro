@@ -9,14 +9,6 @@ import { DeleteSessionButton } from "@/components/training/DeleteSessionButton";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-const CATEGORY_LABELS: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
-
 function formatDuration(seconds: number) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -41,13 +33,13 @@ export default async function SessionDetailPage({ params }: Props) {
           plan: { select: { title: true } },
           planDayExercises: {
             orderBy: { orderIndex: "asc" },
-            include: { exercise: { select: { id: true, name: true, category: true } } },
+            include: { exercise: { select: { id: true, name: true, categories: { select: { name: true } } } } },
           },
         },
       },
       setLogs: {
         orderBy: [{ exerciseId: "asc" }, { setNumber: "asc" }],
-        include: { exercise: { select: { id: true, name: true, category: true } } },
+        include: { exercise: { select: { id: true, name: true, categories: { select: { name: true } } } } },
       },
     },
   });
@@ -130,7 +122,7 @@ export default async function SessionDetailPage({ params }: Props) {
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-sm">{exercise.name}</p>
                 <Badge variant="outline" className="text-xs">
-                  {CATEGORY_LABELS[exercise.category] ?? exercise.category}
+                  {exercise.categories.map((c) => c.name).join(", ")}
                 </Badge>
               </div>
               <div className="space-y-1">

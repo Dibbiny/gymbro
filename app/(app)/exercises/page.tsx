@@ -4,14 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { ExerciseSubmitForm } from "@/components/exercises/ExerciseSubmitForm";
 import { Dumbbell, Clock, ExternalLink } from "lucide-react";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
-
 export default async function ExercisesPage() {
   const session = await auth();
 
@@ -26,7 +18,7 @@ export default async function ExercisesPage() {
     select: {
       id: true,
       name: true,
-      category: true,
+      categories: { select: { id: true, name: true } },
       description: true,
       demoUrl: true,
       status: true,
@@ -61,7 +53,7 @@ export default async function ExercisesPage() {
               <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
                 <div>
                   <p className="text-sm font-medium">{ex.name}</p>
-                  <p className="text-xs text-muted-foreground">{CATEGORY_LABELS[ex.category] ?? ex.category}</p>
+                  <p className="text-xs text-muted-foreground">{ex.categories.map((c) => c.name).join(", ")}</p>
                 </div>
                 <Badge variant="secondary" className="text-xs">Pending</Badge>
               </div>
@@ -90,7 +82,7 @@ export default async function ExercisesPage() {
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     )}
-                    <Badge variant="outline" className="text-xs">{CATEGORY_LABELS[ex.category] ?? ex.category}</Badge>
+                    <Badge variant="outline" className="text-xs">{ex.categories.map((c) => c.name).join(", ")}</Badge>
                   </div>
                 </div>
                 {ex.description && (

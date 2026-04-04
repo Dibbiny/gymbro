@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient, ExerciseCategory, ExerciseStatus, Role } from "@prisma/client";
+import { PrismaClient, ExerciseStatus, Role } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
@@ -11,31 +11,31 @@ const exercises = [
     name: "Bench Press",
     description:
       "Lie flat on a bench, grip the barbell slightly wider than shoulder-width, lower it to your chest, then press it back up.",
-    category: ExerciseCategory.PUSH,
+    categoryName: "Push",
   },
   {
     name: "Overhead Press",
     description:
       "Stand with feet shoulder-width apart, press a barbell from shoulder height directly overhead until arms are fully extended.",
-    category: ExerciseCategory.PUSH,
+    categoryName: "Push",
   },
   {
     name: "Lat Pulldown",
     description:
       "Sit at a cable machine, grip the bar wider than shoulder-width, and pull it down to your upper chest while keeping your torso upright.",
-    category: ExerciseCategory.PULL,
+    categoryName: "Pull",
   },
   {
     name: "Squat",
     description:
       "Stand with feet shoulder-width apart, bar on your upper back, descend until thighs are parallel to the floor, then drive back up.",
-    category: ExerciseCategory.LEGS,
+    categoryName: "Legs",
   },
   {
     name: "Deadlift",
     description:
       "With a barbell on the floor, hinge at the hips, grip the bar just outside your legs, and lift by driving through your heels and extending your hips.",
-    category: ExerciseCategory.LOWER_BODY,
+    categoryName: "Lower Body",
   },
 ];
 
@@ -60,9 +60,15 @@ async function main() {
 
   // Seed exercises
   for (const ex of exercises) {
+    // Find or create the category
+    const category = await prisma.category.upsert({
+      where: { name: ex.categoryName },
+      update: {},
+      create: { name: ex.categoryName },
+    });
+
     const created = await prisma.exercise.upsert({
       where: {
-        // Using name + submittedById as a proxy for uniqueness in seed
         id: `seed-${ex.name.toLowerCase().replace(/\s+/g, "-")}`,
       },
       update: {},
@@ -70,14 +76,14 @@ async function main() {
         id: `seed-${ex.name.toLowerCase().replace(/\s+/g, "-")}`,
         name: ex.name,
         description: ex.description,
-        category: ex.category,
         status: ExerciseStatus.APPROVED,
         submittedById: admin.id,
         approvedById: admin.id,
         approvedAt: new Date(),
+        categories: { connect: { id: category.id } },
       },
     });
-    console.log(`Exercise: ${created.name} [${created.category}]`);
+    console.log(`Exercise: ${created.name}`);
   }
 
   console.log("Seeding complete.");
