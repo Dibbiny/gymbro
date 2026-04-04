@@ -19,21 +19,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
+  // If there's already an incomplete session for this plan day, resume it
+  if (parsed.data.planDayId) {
+    const existing = await db.trainingSession.findFirst({
+      where: {
+        userId: session.user.id,
+        planDayId: parsed.data.planDayId,
+        completedAt: null,
+      },
+    });
+    if (existing) {
+      return NextResponse.json({ session: existing });
+    }
+  }
+
   const trainingSession = await db.trainingSession.create({
     data: {
       userId: session.user.id,
       enrollmentId: parsed.data.enrollmentId ?? null,
       planDayId: parsed.data.planDayId ?? null,
-    },
-    include: {
-      planDay: {
-        include: {
-          planDayExercises: {
-            orderBy: { orderIndex: "asc" },
-            include: { exercise: true },
-          },
-        },
-      },
     },
   });
 

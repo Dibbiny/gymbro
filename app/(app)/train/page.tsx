@@ -5,7 +5,7 @@ import { StartSessionButton } from "@/components/training/StartSessionButton";
 import { UnenrollButton } from "@/components/training/UnenrollButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Dumbbell, Shuffle } from "lucide-react";
+import { CheckCircle2, Dumbbell, Play, Shuffle } from "lucide-react";
 
 export default async function TrainPage() {
   const session = await auth();
@@ -27,8 +27,7 @@ export default async function TrainPage() {
         },
       },
       trainingSessions: {
-        where: { completedAt: { not: null } },
-        select: { id: true, planDayId: true },
+        select: { id: true, planDayId: true, completedAt: true },
       },
     },
     orderBy: { enrolledAt: "desc" },
@@ -65,7 +64,16 @@ export default async function TrainPage() {
           {enrollments.map((enrollment) => {
             const plan = enrollment.plan;
             const completedDayIds = new Set(
-              enrollment.trainingSessions.map((s) => s.planDayId).filter(Boolean)
+              enrollment.trainingSessions
+                .filter((s) => s.completedAt !== null)
+                .map((s) => s.planDayId)
+                .filter(Boolean)
+            );
+            // Map planDayId → sessionId for any incomplete (active) session
+            const activeSessionByDayId = new Map(
+              enrollment.trainingSessions
+                .filter((s) => s.completedAt === null && s.planDayId)
+                .map((s) => [s.planDayId!, s.id])
             );
             const allTrainingDays = plan.planDays.filter((d) => d.planDayExercises.length > 0);
             const totalDays = allTrainingDays.length;
@@ -100,8 +108,9 @@ export default async function TrainPage() {
                 <CardContent className="space-y-2">
                   {trainingDays.map((day) => {
                     const done = completedDayIds.has(day.id);
+                    const activeSessionId = activeSessionByDayId.get(day.id);
                     return (
-                      <div key={day.id} className="rounded-lg border px-3 py-2.5 space-y-1.5">
+                      <div key={day.id} className={`rounded-lg border px-3 py-2.5 space-y-1.5 ${activeSessionId ? "border-primary/50 bg-primary/5" : ""}`}>
                         <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold truncate">
@@ -115,6 +124,13 @@ export default async function TrainPage() {
                             <span className="flex items-center gap-1 text-xs text-primary font-medium shrink-0">
                               <CheckCircle2 className="h-3.5 w-3.5" /> Done
                             </span>
+                          ) : activeSessionId ? (
+                            <Link
+                              href={`/train/session/${activeSessionId}`}
+                              className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 h-8 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+                            >
+                              <Play className="h-3 w-3" /> Resume
+                            </Link>
                           ) : (
                             <StartSessionButton
                               enrollmentId={enrollment.id}
