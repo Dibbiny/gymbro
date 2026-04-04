@@ -72,8 +72,8 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
     reset,
   } = useTrainingSession();
 
-  const isResuming = preloadedLogs.length > 0;
-  const { pause, resume, startRest: workerStartRest, skipRest } = useTimerWorker(sessionId, isResuming ? pausedDuration : 0);
+  const isResuming = pausedDuration > 0 || preloadedLogs.length > 0;
+  const { pause, resume, startRest: workerStartRest, skipRest } = useTimerWorker(sessionId, pausedDuration);
 
   // Init store on mount
   useEffect(() => {
