@@ -9,6 +9,7 @@ import { FollowButton } from "@/components/social/FollowButton";
 import { xpToLevel } from "@/lib/xp";
 import { Progress } from "@/components/ui/progress";
 import { Dumbbell, Trophy, User, Pencil, History } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 interface Props {
@@ -108,7 +109,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                   <Link href={`/profile/${u.username}`} className="flex-1 flex items-center gap-3 min-w-0">
                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
                       {u.avatarUrl ? (
-                        <img src={u.avatarUrl} alt={u.username} className="h-full w-full object-cover" />
+                        <Image src={u.avatarUrl} alt={u.username} width={40} height={40} className="h-full w-full object-cover" />
                       ) : (
                         <User className="h-5 w-5 text-muted-foreground" />
                       )}

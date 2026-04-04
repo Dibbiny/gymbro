@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -128,8 +129,15 @@ export function PostCard({ post, currentUserId }: { post: Post; currentUserId: s
 
       {/* Post image */}
       {post.imageUrl && (
-        <div className="rounded-xl overflow-hidden">
-          <img src={post.imageUrl} alt="Post image" className="w-full object-contain max-h-[500px] bg-black" />
+        <div className="rounded-xl overflow-hidden bg-black">
+          <Image
+            src={post.imageUrl}
+            alt="Post image"
+            width={800}
+            height={600}
+            className="w-full h-auto object-contain max-h-[500px]"
+            sizes="(max-width: 640px) 100vw, 600px"
+          />
         </div>
       )}
 

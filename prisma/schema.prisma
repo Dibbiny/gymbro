@@ -178,6 +178,7 @@ model PlanEnrollment {
   posts            Post[]
 
   @@unique([userId, planId])
+  @@index([userId, isActive])
   @@map("plan_enrollments")
 }
 
@@ -200,6 +201,8 @@ model TrainingSession {
   setLogs SetLog[]
   posts   Post[]
 
+  @@index([userId, completedAt])
+  @@index([planDayId, completedAt])
   @@map("training_sessions")
 }
 
@@ -241,6 +244,7 @@ model Post {
   likes    PostLike[]
   comments PostComment[]
 
+  @@index([authorId, createdAt])
   @@map("posts")
 }
 
@@ -285,6 +289,8 @@ model Follow {
   following   User   @relation("Following", fields: [followingId], references: [id])
 
   @@unique([followerId, followingId])
+  @@index([followerId, status])
+  @@index([followingId, status])
   @@map("follows")
 }
 

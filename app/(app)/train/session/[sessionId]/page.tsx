@@ -56,29 +56,28 @@ export default async function SessionPage({ params }: Props) {
       const parsed = JSON.parse(trainingSession.notes);
       if (parsed.randomDay && Array.isArray(parsed.exercises)) {
         isRandomDay = true;
-        exercises = await Promise.all(
-          parsed.exercises.map(async (e: {
-            exerciseId: string; sets: number; reps: number;
-            restSeconds: number; orderIndex: number;
-          }) => {
-            const ex = await db.exercise.findUnique({
-              where: { id: e.exerciseId },
-              select: { id: true, name: true, categories: { select: { name: true } }, description: true, demoUrl: true },
-            });
-            return {
-              planDayExerciseId: `random-${e.exerciseId}`,
-              exerciseId: e.exerciseId,
-              exerciseName: ex?.name ?? "Unknown",
-              categories: ex?.categories?.map((c) => c.name) ?? [],
-              description: ex?.description,
-              demoUrl: ex?.demoUrl,
-              sets: e.sets,
-              reps: e.reps,
-              restSeconds: e.restSeconds,
-              orderIndex: e.orderIndex,
-            } as ExerciseEntry;
-          })
-        );
+        const parsedExercises: { exerciseId: string; sets: number; reps: number; restSeconds: number; orderIndex: number; }[] = parsed.exercises;
+        const exerciseIds = parsedExercises.map((e) => e.exerciseId);
+        const exerciseRows = await db.exercise.findMany({
+          where: { id: { in: exerciseIds } },
+          select: { id: true, name: true, categories: { select: { name: true } }, description: true, demoUrl: true },
+        });
+        const exerciseMap = new Map(exerciseRows.map((ex) => [ex.id, ex]));
+        exercises = parsedExercises.map((e) => {
+          const ex = exerciseMap.get(e.exerciseId);
+          return {
+            planDayExerciseId: `random-${e.exerciseId}`,
+            exerciseId: e.exerciseId,
+            exerciseName: ex?.name ?? "Unknown",
+            categories: ex?.categories?.map((c) => c.name) ?? [],
+            description: ex?.description,
+            demoUrl: ex?.demoUrl,
+            sets: e.sets,
+            reps: e.reps,
+            restSeconds: e.restSeconds,
+            orderIndex: e.orderIndex,
+          } as ExerciseEntry;
+        });
         planDayLabel = "Random Day";
       }
     } catch {}

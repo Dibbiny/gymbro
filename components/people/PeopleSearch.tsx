@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Search, User } from "lucide-react";
 import { FollowButton } from "@/components/social/FollowButton";
@@ -83,7 +84,7 @@ export function PeopleSearch({ initialUsers }: Props) {
                 <Link href={`/profile/${user.username}`} className="flex-1 flex items-center gap-3 min-w-0">
                   <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
                     {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user.username} className="h-full w-full object-cover" />
+                      <Image src={user.avatarUrl} alt={user.username} width={40} height={40} className="h-full w-full object-cover" />
                     ) : (
                       <User className="h-5 w-5 text-muted-foreground" />
                     )}
