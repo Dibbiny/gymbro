@@ -25,8 +25,7 @@ export default async function AdminExercisesPage() {
         submittedBy: { select: { username: true } },
         categories: { select: { id: true, name: true } },
       },
-      orderBy: { createdAt: "desc" },
-      take: 30,
+      orderBy: { name: "asc" },
     }),
     db.exercise.findMany({
       where: { status: "REJECTED" },
@@ -34,8 +33,7 @@ export default async function AdminExercisesPage() {
         submittedBy: { select: { username: true } },
         categories: { select: { id: true, name: true } },
       },
-      orderBy: { createdAt: "desc" },
-      take: 20,
+      orderBy: { name: "asc" },
     }),
     db.category.findMany({ orderBy: { name: "asc" } }),
   ]);
