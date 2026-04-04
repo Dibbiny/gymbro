@@ -8,7 +8,7 @@ import { PostCard } from "@/components/feed/PostCard";
 import { FollowButton } from "@/components/social/FollowButton";
 import { xpToLevel } from "@/lib/xp";
 import { Progress } from "@/components/ui/progress";
-import { Dumbbell, Trophy, User, Pencil, History } from "lucide-react";
+import { Dumbbell, Trophy, User, Pencil, History, Medal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -35,6 +35,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
         select: {
           followers: { where: { status: "ACCEPTED" } },
           following: { where: { status: "ACCEPTED" } },
+          trainingSessions: { where: { completedAt: { not: null } } },
         },
       },
     },
@@ -140,6 +141,32 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       })
     : [];
 
+  // Personal Records (max weight per exercise, only for self + followers)
+  let prs: { name: string; weightKg: number }[] = [];
+  if (canSeeFull) {
+    const prRows = await db.setLog.groupBy({
+      by: ["exerciseId"],
+      where: {
+        session: { userId: user.id, completedAt: { not: null } },
+        weightKg: { not: null },
+      },
+      _max: { weightKg: true },
+      orderBy: { _max: { weightKg: "desc" } },
+      take: 15,
+    });
+    if (prRows.length > 0) {
+      const exerciseNames = await db.exercise.findMany({
+        where: { id: { in: prRows.map((r) => r.exerciseId) } },
+        select: { id: true, name: true },
+      });
+      const nameMap = new Map(exerciseNames.map((e) => [e.id, e.name]));
+      prs = prRows.map((r) => ({
+        name: nameMap.get(r.exerciseId) ?? r.exerciseId,
+        weightKg: r._max.weightKg!,
+      }));
+    }
+  }
+
   // Posts
   const posts = await db.post.findMany({
     where: { authorId: user.id },
@@ -201,15 +228,13 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             <p className="text-xs text-muted-foreground">Following</p>
           </Link>
           <div>
+            <p className="text-lg font-bold">{user._count.trainingSessions}</p>
+            <p className="text-xs text-muted-foreground">Workouts</p>
+          </div>
+          <div>
             <p className="text-lg font-bold">{user.experiencePoints}</p>
             <p className="text-xs text-muted-foreground">XP</p>
           </div>
-          {isSelf && (
-            <Link href="/history" className="hover:opacity-70 transition-opacity">
-              <p className="text-lg font-bold"><History className="h-5 w-5 mx-auto" /></p>
-              <p className="text-xs text-muted-foreground">History</p>
-            </Link>
-          )}
         </div>
 
         {/* Level */}
@@ -220,6 +245,20 @@ export default async function ProfilePage({ params, searchParams }: Props) {
           </div>
           <Progress value={progress} className="h-2" />
         </div>
+
+        {/* History shortcut — only for self */}
+        {isSelf && (
+          <Link
+            href="/history"
+            className="flex items-center justify-between rounded-xl border border-border bg-muted/40 px-4 py-2.5 hover:bg-muted transition-colors"
+          >
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <History className="h-4 w-4 text-muted-foreground" />
+              My Training History
+            </span>
+            <span className="text-xs text-muted-foreground">→</span>
+          </Link>
+        )}
       </div>
 
       {/* Currently training (self + followers only) */}
@@ -240,6 +279,26 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                 <Badge variant="secondary" className="text-xs">{e.plan.durationWeeks}w</Badge>
               </Link>
             ))}
+          </section>
+        </>
+      )}
+
+      {/* Personal Records */}
+      {prs.length > 0 && (
+        <>
+          <Separator />
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold flex items-center gap-1.5">
+              <Medal className="h-4 w-4" /> Personal Records
+            </h2>
+            <div className="grid grid-cols-2 gap-2">
+              {prs.map((pr) => (
+                <div key={pr.name} className="rounded-xl border bg-card px-3 py-2.5 space-y-0.5">
+                  <p className="text-xs text-muted-foreground truncate">{pr.name}</p>
+                  <p className="text-base font-bold">{pr.weightKg % 1 === 0 ? pr.weightKg : pr.weightKg.toFixed(1)} kg</p>
+                </div>
+              ))}
+            </div>
           </section>
         </>
       )}
