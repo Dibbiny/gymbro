@@ -41,7 +41,7 @@ function extractYouTubeId(url: string): string | null {
 
 export function ExerciseList({ exercises, pendingExercises }: Props) {
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
   const [selected, setSelected] = useState<Exercise | null>(null);
 
   // Derive unique categories from exercises
@@ -61,10 +61,10 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
     const q = search.toLowerCase();
     return exercises.filter((ex) => {
       const matchesSearch = !q || ex.name.toLowerCase().includes(q) || ex.description?.toLowerCase().includes(q);
-      const matchesCategory = categoryFilter === null || ex.categories.some((c) => c.id === categoryFilter);
+      const matchesCategory = categoryFilters.length === 0 || categoryFilters.every((id) => ex.categories.some((c) => c.id === id));
       return matchesSearch && matchesCategory;
     });
-  }, [exercises, search, categoryFilter]);
+  }, [exercises, search, categoryFilters]);
 
   const youtubeId = selected?.demoUrl ? extractYouTubeId(selected.demoUrl) : null;
 
@@ -92,10 +92,10 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
 
         <div className="flex gap-1.5 flex-wrap">
           <button
-            onClick={() => setCategoryFilter(null)}
+            onClick={() => setCategoryFilters([])}
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              !categoryFilter ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+              categoryFilters.length === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
             )}
           >
             All
@@ -103,10 +103,14 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
           {allCategories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setCategoryFilter(categoryFilter === cat.id ? null : cat.id)}
+              onClick={() =>
+                setCategoryFilters((prev) =>
+                  prev.includes(cat.id) ? prev.filter((id) => id !== cat.id) : [...prev, cat.id]
+                )
+              }
               className={cn(
                 "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                categoryFilter === cat.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                categoryFilters.includes(cat.id) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
               {cat.name}

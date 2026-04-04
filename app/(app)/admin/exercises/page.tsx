@@ -3,9 +3,9 @@ import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "@/lib/time";
 import { ExerciseApprovalActions } from "@/components/admin/ExerciseApprovalActions";
-import { ExerciseAdminActions } from "@/components/admin/ExerciseAdminActions";
 import { ExerciseSubmitForm } from "@/components/exercises/ExerciseSubmitForm";
 import { CategoryManager } from "@/components/admin/CategoryManager";
+import { AdminExerciseList } from "@/components/admin/AdminExerciseList";
 
 export default async function AdminExercisesPage() {
   const session = await auth();
@@ -90,35 +90,13 @@ export default async function AdminExercisesPage() {
       </section>
 
       {/* Approved */}
-      <section className="space-y-3">
-        <h2 className="font-semibold text-sm text-muted-foreground">Approved ({approved.length})</h2>
-        <div className="space-y-1.5">
-          {approved.map((ex) => (
-            <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2 gap-2">
-              <div className="min-w-0">
-                <span className="text-sm font-medium">{ex.name}</span>
-                <span className="text-xs text-muted-foreground ml-2">{ex.categories.map((c) => c.name).join(", ")}</span>
-              </div>
-              <ExerciseAdminActions exercise={ex} />
-            </div>
-          ))}
-        </div>
+      <section>
+        <AdminExerciseList exercises={approved} allCategories={categories} label="Approved" />
       </section>
 
       {rejected.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="font-semibold text-sm text-muted-foreground">Rejected ({rejected.length})</h2>
-          <div className="space-y-1.5">
-            {rejected.map((ex) => (
-              <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2 gap-2 opacity-70">
-                <div className="min-w-0">
-                  <span className="text-sm font-medium">{ex.name}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{ex.categories.map((c) => c.name).join(", ")}</span>
-                </div>
-                <ExerciseAdminActions exercise={ex} />
-              </div>
-            ))}
-          </div>
+        <section>
+          <AdminExerciseList exercises={rejected} allCategories={categories} label="Rejected" dimmed />
         </section>
       )}
     </div>
