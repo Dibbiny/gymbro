@@ -27,7 +27,13 @@ export default async function TrainPage() {
         },
       },
       trainingSessions: {
-        select: { id: true, planDayId: true, completedAt: true },
+        select: {
+          id: true,
+          planDayId: true,
+          completedAt: true,
+          planDay: { select: { dayOfWeek: true } },
+          _count: { select: { setLogs: true } },
+        },
       },
     },
     orderBy: { enrolledAt: "desc" },
@@ -69,10 +75,10 @@ export default async function TrainPage() {
                 .map((s) => s.planDayId)
                 .filter(Boolean)
             );
-            // Map planDayId → sessionId for any incomplete (active) session
+            // Map planDayId → sessionId for sessions that are in-progress (incomplete + has logged sets)
             const activeSessionByDayId = new Map(
               enrollment.trainingSessions
-                .filter((s) => s.completedAt === null && s.planDayId)
+                .filter((s) => s.completedAt === null && s.planDayId && s._count.setLogs > 0)
                 .map((s) => [s.planDayId!, s.id])
             );
             const allTrainingDays = plan.planDays.filter((d) => d.planDayExercises.length > 0);

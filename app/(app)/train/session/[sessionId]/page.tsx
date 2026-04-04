@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { SessionClient } from "./SessionClient";
-import type { ExerciseEntry } from "@/store/trainingSession";
+import type { ExerciseEntry, PreloadedSetLog } from "@/store/trainingSession";
 
 interface Props {
   params: Promise<{ sessionId: string }>;
@@ -25,6 +25,10 @@ export default async function SessionPage({ params }: Props) {
           },
         },
       },
+      setLogs: {
+        select: { exerciseId: true, setNumber: true, weightKg: true, repsCompleted: true },
+        orderBy: [{ exerciseId: "asc" }, { setNumber: "asc" }],
+      },
     },
   });
 
@@ -35,6 +39,8 @@ export default async function SessionPage({ params }: Props) {
   let exercises: ExerciseEntry[] = [];
   let planDayLabel: string | null = null;
   let isRandomDay = false;
+  const preloadedLogs: PreloadedSetLog[] = trainingSession.setLogs;
+  const pausedDuration = trainingSession.pausedDuration;
 
   if (trainingSession.planDay) {
     exercises = trainingSession.planDay.planDayExercises.map((pde) => ({
@@ -89,6 +95,8 @@ export default async function SessionPage({ params }: Props) {
       exercises={exercises}
       planDayLabel={planDayLabel}
       isRandomDay={isRandomDay}
+      preloadedLogs={preloadedLogs}
+      pausedDuration={pausedDuration}
     />
   );
 }

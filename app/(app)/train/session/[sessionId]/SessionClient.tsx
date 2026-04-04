@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTrainingSession, ExerciseEntry } from "@/store/trainingSession";
+import { useTrainingSession, ExerciseEntry, PreloadedSetLog } from "@/store/trainingSession";
 import { useTimerWorker } from "@/hooks/useTimerWorker";
 import { ElapsedTimer } from "@/components/training/ElapsedTimer";
 import { RestCountdown } from "@/components/training/RestCountdown";
@@ -39,9 +39,11 @@ interface Props {
   exercises: ExerciseEntry[];
   planDayLabel: string | null;
   isRandomDay?: boolean;
+  preloadedLogs?: PreloadedSetLog[];
+  pausedDuration?: number;
 }
 
-export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay = false }: Props) {
+export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay = false, preloadedLogs = [], pausedDuration = 0 }: Props) {
   const router = useRouter();
   const [isFinishing, setIsFinishing] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
@@ -54,6 +56,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
 
   const {
     initSession,
+    resumeSession,
     currentExerciseIndex,
     currentSet,
     setLogs,
@@ -69,11 +72,16 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
     reset,
   } = useTrainingSession();
 
-  const { pause, resume, startRest: workerStartRest, skipRest } = useTimerWorker(sessionId);
+  const isResuming = preloadedLogs.length > 0;
+  const { pause, resume, startRest: workerStartRest, skipRest } = useTimerWorker(sessionId, isResuming ? pausedDuration : 0);
 
   // Init store on mount
   useEffect(() => {
-    initSession(sessionId, exercises);
+    if (isResuming) {
+      resumeSession(sessionId, exercises, preloadedLogs, pausedDuration);
+    } else {
+      initSession(sessionId, exercises);
+    }
     return () => reset();
   }, [sessionId]);
 

@@ -10,7 +10,7 @@ type WorkerOutMessage =
   | { type: "paused" }
   | { type: "resumed" };
 
-export function useTimerWorker(sessionId: string | null) {
+export function useTimerWorker(sessionId: string | null, elapsedOffset = 0) {
   const workerRef = useRef<Worker | null>(null);
   const { setElapsed, setPaused, tickRest, stopRest, isResting } = useTrainingSession();
 
@@ -45,7 +45,7 @@ export function useTimerWorker(sessionId: string | null) {
       }
     };
 
-    worker.postMessage({ type: "start", elapsedOffset: 0 });
+    worker.postMessage({ type: "start", elapsedOffset });
 
     return () => {
       worker.postMessage({ type: "terminate" });

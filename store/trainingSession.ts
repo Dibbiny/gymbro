@@ -21,6 +21,13 @@ export interface SetLogEntry {
   saved: boolean;
 }
 
+export interface PreloadedSetLog {
+  exerciseId: string;
+  setNumber: number;
+  weightKg: number | null;
+  repsCompleted: number;
+}
+
 interface TrainingSessionState {
   sessionId: string | null;
   exercises: ExerciseEntry[];
@@ -34,6 +41,12 @@ interface TrainingSessionState {
 
   // Actions
   initSession: (sessionId: string, exercises: ExerciseEntry[]) => void;
+  resumeSession: (
+    sessionId: string,
+    exercises: ExerciseEntry[],
+    preloadedLogs: PreloadedSetLog[],
+    elapsedSeconds: number
+  ) => void;
   setElapsed: (seconds: number) => void;
   setPaused: (paused: boolean) => void;
   startRest: () => void;
@@ -68,6 +81,36 @@ export const useTrainingSession = create<TrainingSessionState>((set, get) => ({
       restSecondsLeft: 0,
       elapsedSeconds: 0,
     }),
+
+  resumeSession: (sessionId, exercises, preloadedLogs, elapsedSeconds) => {
+    const setLogs: SetLogEntry[] = preloadedLogs.map((l) => ({ ...l, saved: true }));
+
+    // Find the first exercise that isn't fully done
+    let currentExerciseIndex = exercises.length - 1;
+    let currentSet = exercises[exercises.length - 1]?.sets ?? 1;
+
+    for (let i = 0; i < exercises.length; i++) {
+      const ex = exercises[i];
+      const completedSets = setLogs.filter((l) => l.exerciseId === ex.exerciseId).length;
+      if (completedSets < ex.sets) {
+        currentExerciseIndex = i;
+        currentSet = completedSets + 1;
+        break;
+      }
+    }
+
+    set({
+      sessionId,
+      exercises,
+      currentExerciseIndex,
+      currentSet,
+      setLogs,
+      isPaused: false,
+      isResting: false,
+      restSecondsLeft: 0,
+      elapsedSeconds,
+    });
+  },
 
   setElapsed: (seconds) => set({ elapsedSeconds: seconds }),
 
