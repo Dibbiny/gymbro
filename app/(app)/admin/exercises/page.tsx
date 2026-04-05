@@ -64,13 +64,13 @@ export default async function AdminExercisesPage() {
           <p className="text-sm text-muted-foreground">All caught up!</p>
         ) : (
           <div className="space-y-2">
-            {pending.map((ex) => (
+            {pending.map((ex: any) => (
               <div key={ex.id} className="rounded-xl border p-3.5 space-y-2">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-sm">{ex.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {ex.categories.map((c) => c.name).join(", ")} · by @{ex.submittedBy.username} · {formatDistanceToNow(new Date(ex.createdAt))}
+                      {ex.categories.map((c: any) => c.name).join(", ")} · by @{ex.submittedBy.username} · {formatDistanceToNow(new Date(ex.createdAt))}
                     </p>
                     {ex.description && (
                       <p className="text-xs text-muted-foreground mt-1">{ex.description}</p>

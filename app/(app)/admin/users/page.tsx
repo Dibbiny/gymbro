@@ -32,7 +32,7 @@ export default async function AdminUsersPage() {
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">{users.length} users total</p>
       <div className="space-y-2">
-        {users.map((user) => {
+        {users.map((user: any) => {
           const { level } = xpToLevel(user.experiencePoints);
           const isSelf = user.id === session!.user.id;
           return (
