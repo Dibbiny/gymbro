@@ -1,10 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
-
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL!;
   const adapter = new PrismaPg({
@@ -18,6 +14,6 @@ function createPrismaClient() {
   });
 }
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+// In Cloudflare Workers each isolate has its own global scope, so
+// module-level singletons work correctly without the dev-mode guard.
+export const db = createPrismaClient();
