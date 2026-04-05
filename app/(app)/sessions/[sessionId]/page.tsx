@@ -122,11 +122,11 @@ export default async function SessionDetailPage({ params }: Props) {
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-sm">{exercise.name}</p>
                 <Badge variant="outline" className="text-xs">
-                  {exercise.categories.map((c) => c.name).join(", ")}
+                  {exercise.categories.map((c: any) => c.name).join(", ")}
                 </Badge>
               </div>
               <div className="space-y-1">
-                {logs.map((log) => (
+                {logs.map((log: any) => (
                   <div key={log.id} className="space-y-0.5">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground text-xs">Set {log.setNumber}</span>

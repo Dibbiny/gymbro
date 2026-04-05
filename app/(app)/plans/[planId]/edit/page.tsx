@@ -33,11 +33,11 @@ export default async function EditPlanPage({ params }: Props) {
     description: plan.description ?? "",
     durationWeeks: plan.durationWeeks,
     visibility: plan.visibility as "PUBLIC" | "PRIVATE",
-    days: plan.planDays.map((day) => ({
+    days: plan.planDays.map((day: any) => ({
       dayOfWeek: day.dayOfWeek,
       weekNumber: day.weekNumber,
       label: day.label ?? "",
-      exercises: day.planDayExercises.map((ex) => ({
+      exercises: day.planDayExercises.map((ex: any) => ({
         exerciseId: ex.exerciseId,
         orderIndex: ex.orderIndex,
         sets: ex.sets,

@@ -67,25 +67,25 @@ export default async function TrainPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {enrollments.map((enrollment) => {
+          {enrollments.map((enrollment: any) => {
             const plan = enrollment.plan;
             const completedDayIds = new Set(
               enrollment.trainingSessions
-                .filter((s) => s.completedAt !== null)
-                .map((s) => s.planDayId)
+                .filter((s: any) => s.completedAt !== null)
+                .map((s: any) => s.planDayId)
                 .filter(Boolean)
             );
             // Map planDayId → sessionId for sessions that are in-progress (incomplete + has logged sets)
             const activeSessionByDayId = new Map(
               enrollment.trainingSessions
-                .filter((s) => s.completedAt === null && s.planDayId && s._count.setLogs > 0)
-                .map((s) => [s.planDayId!, s.id])
+                .filter((s: any) => s.completedAt === null && s.planDayId && s._count.setLogs > 0)
+                .map((s: any) => [s.planDayId!, s.id])
             );
-            const allTrainingDays = plan.planDays.filter((d) => d.planDayExercises.length > 0);
+            const allTrainingDays = plan.planDays.filter((d: any) => d.planDayExercises.length > 0);
             const totalDays = allTrainingDays.length;
-            const completedDays = allTrainingDays.filter((d) => completedDayIds.has(d.id)).length;
+            const completedDays = allTrainingDays.filter((d: any) => completedDayIds.has(d.id)).length;
             // Show only week 1 days as the representative week
-            const trainingDays = allTrainingDays.filter((d) => d.weekNumber === 1);
+            const trainingDays = allTrainingDays.filter((d: any) => d.weekNumber === 1);
             const progressPct = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
 
             return (
@@ -112,7 +112,7 @@ export default async function TrainPage() {
                 </CardHeader>
 
                 <CardContent className="space-y-2">
-                  {trainingDays.map((day) => {
+                  {trainingDays.map((day: any) => {
                     const done = completedDayIds.has(day.id);
                     const activeSessionId = activeSessionByDayId.get(day.id);
                     return (
@@ -146,7 +146,7 @@ export default async function TrainPage() {
                           )}
                         </div>
                         <div className="space-y-0.5">
-                          {day.planDayExercises.slice(0, 3).map((pde) => (
+                          {day.planDayExercises.slice(0, 3).map((pde: any) => (
                             <p key={pde.id} className="text-xs text-muted-foreground">
                               {pde.exercise.name} — {pde.sets}×{pde.reps}
                             </p>

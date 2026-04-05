@@ -58,8 +58,8 @@ export default async function PlansPage({ searchParams }: Props) {
       })
     : [];
 
-  const approvedExercises = exercises.filter((e) => e.status === "APPROVED");
-  const myPendingExercises = exercises.filter((e) => e.status === "PENDING");
+  const approvedExercises = exercises.filter((e: any) => e.status === "APPROVED");
+  const myPendingExercises = exercises.filter((e: any) => e.status === "PENDING");
 
   const sortOptions = [
     { value: "rating", label: "Top Rated" },
@@ -126,7 +126,7 @@ export default async function PlansPage({ searchParams }: Props) {
               </div>
             ) : (
               <div className="space-y-3">
-                {myPlans.map((plan) => (
+                {myPlans.map((plan: any) => (
                   <PlanCard key={plan.id} plan={plan} />
                 ))}
               </div>
@@ -137,7 +137,7 @@ export default async function PlansPage({ searchParams }: Props) {
           <section className="space-y-3">
             <h2 className="font-semibold">Discover Plans</h2>
             <div className="flex gap-2">
-              {sortOptions.map((opt) => (
+              {sortOptions.map((opt: any) => (
                 <Link
                   key={opt.value}
                   href={`/plans?sort=${opt.value}`}
@@ -156,7 +156,7 @@ export default async function PlansPage({ searchParams }: Props) {
               <p className="text-sm text-muted-foreground text-center py-8">No public plans yet.</p>
             ) : (
               <div className="space-y-3">
-                {plans.map((plan) => (
+                {plans.map((plan: any) => (
                   <PlanCard key={plan.id} plan={plan} />
                 ))}
               </div>
