@@ -30,7 +30,6 @@ export function useTimerWorker(sessionId: string | null, elapsedOffset = 0) {
           setElapsed(msg.seconds);
           break;
         case "rest_tick":
-          // Drive rest countdown via store so UI reacts
           useTrainingSession.setState({ restSecondsLeft: msg.seconds });
           break;
         case "rest_done":
@@ -47,7 +46,17 @@ export function useTimerWorker(sessionId: string | null, elapsedOffset = 0) {
 
     worker.postMessage({ type: "start", elapsedOffset });
 
+    // When returning from background, force an immediate sync tick so
+    // the UI snaps to the correct time without waiting for the next interval.
+    function handleVisibility() {
+      if (document.visibilityState === "visible") {
+        worker.postMessage({ type: "sync" });
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
       worker.postMessage({ type: "terminate" });
       worker.terminate();
       workerRef.current = null;
