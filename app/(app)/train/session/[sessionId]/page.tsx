@@ -70,7 +70,7 @@ export default async function SessionPage({ params }: Props) {
         });
         const exerciseMap = new Map(exerciseRows.map((ex: any) => [ex.id, ex]));
         exercises = parsedExercises.map((e: any) => {
-          const ex = exerciseMap.get(e.exerciseId);
+          const ex = exerciseMap.get(e.exerciseId) as any;
           return {
             planDayExerciseId: `random-${e.exerciseId}`,
             exerciseId: e.exerciseId,
