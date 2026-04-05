@@ -47,7 +47,7 @@ export async function POST(
           weekNumber: day.weekNumber,
           label: day.label,
           planDayExercises: {
-            create: day.planDayExercises.map((ex) => ({
+            create: day.planDayExercises.map((ex: any) => ({
               exerciseId: ex.exerciseId,
               orderIndex: ex.orderIndex,
               sets: ex.sets,

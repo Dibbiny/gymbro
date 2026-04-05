@@ -47,7 +47,7 @@ export default async function HistoryPage({ searchParams }: Props) {
         select: { exercise: { select: { id: true, name: true } } },
         distinct: ["exerciseId"],
         orderBy: { exercise: { name: "asc" } },
-      }).then((rows) => rows.map((r) => r.exercise))
+      }).then((rows: any[]) => rows.map((r: any) => r.exercise))
     : [];
 
   // Weekly volume by muscle group (last 8 weeks)
@@ -108,7 +108,7 @@ export default async function HistoryPage({ searchParams }: Props) {
 
       {/* Tabs */}
       <div className="flex gap-2">
-        {tabs.map((t) => (
+        {tabs.map((t: any) => (
           <Link
             key={t.value}
             href={`/history?tab=${t.value}`}
@@ -132,7 +132,7 @@ export default async function HistoryPage({ searchParams }: Props) {
               <p className="text-sm text-muted-foreground">No completed sessions yet</p>
             </div>
           ) : (
-            sessions.map((s) => {
+            sessions.map((s: any) => {
               const duration = s.completedAt
                 ? Math.floor(
                     (new Date(s.completedAt).getTime() - new Date(s.startedAt).getTime()) / 1000 -
@@ -200,7 +200,7 @@ export default async function HistoryPage({ searchParams }: Props) {
               <p className="text-sm text-muted-foreground">No completed plans yet — keep going!</p>
             </div>
           ) : (
-            completedPlans.map((e) => (
+            completedPlans.map((e: any) => (
               <div key={e.id} className="rounded-xl border p-3.5 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

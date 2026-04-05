@@ -44,7 +44,7 @@ export default async function FeedPage() {
   return (
     <div className="space-y-4">
       {/* Announcements */}
-      {announcements.map((a) => (
+      {announcements.map((a: any) => (
         <div key={a.id} className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 space-y-1">
           <div className="flex items-center gap-1.5 text-primary">
             <Megaphone className="h-4 w-4 shrink-0" />
@@ -67,7 +67,7 @@ export default async function FeedPage() {
           </p>
         </div>
       ) : (
-        posts.map((post) => (
+        posts.map((post: any) => (
           <PostCard
             key={post.id}
             post={{

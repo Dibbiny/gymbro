@@ -78,12 +78,12 @@ export async function POST(request: Request) {
       visibility,
       creatorId: session.user.id,
       planDays: {
-        create: days.map((day) => ({
+        create: days.map((day: any) => ({
           dayOfWeek: day.dayOfWeek,
           weekNumber: day.weekNumber,
           label: day.label,
           planDayExercises: {
-            create: day.exercises.map((ex) => ({
+            create: day.exercises.map((ex: any) => ({
               exerciseId: ex.exerciseId,
               orderIndex: ex.orderIndex,
               sets: ex.sets,

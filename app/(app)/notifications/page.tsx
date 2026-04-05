@@ -30,7 +30,7 @@ export default async function NotificationsPage() {
           <p className="text-sm text-muted-foreground font-medium">
             Follow requests ({pendingRequests.length})
           </p>
-          {pendingRequests.map((req) => (
+          {pendingRequests.map((req: any) => (
             <div
               key={req.id}
               className="flex items-center justify-between gap-3 rounded-xl border p-3"

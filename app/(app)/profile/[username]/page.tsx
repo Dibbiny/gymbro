@@ -71,7 +71,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             },
           },
           orderBy: { createdAt: "desc" },
-        }).then((r) => r.map((x) => x.follower))
+        }).then((r: any[]) => r.map((x: any) => x.follower))
       : await db.follow.findMany({
           where: { followerId: user.id, status: "ACCEPTED" },
           select: {
@@ -83,7 +83,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             },
           },
           orderBy: { createdAt: "desc" },
-        }).then((r) => r.map((x) => x.following));
+        }).then((r: any[]) => r.map((x: any) => x.following));
 
     return (
       <div className="space-y-4">
@@ -102,7 +102,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
           </div>
         ) : (
           <div className="space-y-2">
-            {rows.map((u) => {
+            {rows.map((u: any) => {
               const { level } = xpToLevel(u.experiencePoints);
               const fs = u.followers[0]?.status ?? null;
               return (
@@ -156,11 +156,11 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     });
     if (prRows.length > 0) {
       const exerciseNames = await db.exercise.findMany({
-        where: { id: { in: prRows.map((r) => r.exerciseId) } },
+        where: { id: { in: prRows.map((r: any) => r.exerciseId) } },
         select: { id: true, name: true },
       });
-      const nameMap = new Map(exerciseNames.map((e) => [e.id, e.name]));
-      prs = prRows.map((r) => ({
+      const nameMap = new Map(exerciseNames.map((e: any) => [e.id, e.name]));
+      prs = prRows.map((r: any) => ({
         name: nameMap.get(r.exerciseId) ?? r.exerciseId,
         weightKg: r._max.weightKg!,
       }));
@@ -269,7 +269,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             <h2 className="text-sm font-semibold flex items-center gap-1.5">
               <Dumbbell className="h-4 w-4" /> Currently training
             </h2>
-            {activeEnrollments.map((e) => (
+            {activeEnrollments.map((e: any) => (
               <Link
                 key={e.id}
                 href={`/plans/${e.plan.id}`}
@@ -292,7 +292,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
               <Medal className="h-4 w-4" /> Personal Records
             </h2>
             <div className="grid grid-cols-2 gap-2">
-              {prs.map((pr) => (
+              {prs.map((pr: any) => (
                 <div key={pr.name} className="rounded-xl border bg-card px-3 py-2.5 space-y-0.5">
                   <p className="text-xs text-muted-foreground truncate">{pr.name}</p>
                   <p className="text-base font-bold">{pr.weightKg % 1 === 0 ? pr.weightKg : pr.weightKg.toFixed(1)} kg</p>
@@ -309,7 +309,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
           <Separator />
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">Posts</h2>
-            {posts.map((post) => (
+            {posts.map((post: any) => (
               <PostCard
                 key={post.id}
                 post={{ ...post, createdAt: post.createdAt.toISOString(), sessionId: post.sessionId }}

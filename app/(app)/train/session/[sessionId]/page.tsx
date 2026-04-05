@@ -43,11 +43,11 @@ export default async function SessionPage({ params }: Props) {
   const pausedDuration = trainingSession.pausedDuration;
 
   if (trainingSession.planDay) {
-    exercises = trainingSession.planDay.planDayExercises.map((pde) => ({
+    exercises = trainingSession.planDay.planDayExercises.map((pde: any) => ({
       planDayExerciseId: pde.id,
       exerciseId: pde.exercise.id,
       exerciseName: pde.exercise.name,
-      categories: pde.exercise.categories.map((c) => c.name),
+      categories: pde.exercise.categories.map((c: any) => c.name),
       description: pde.exercise.description,
       demoUrl: pde.exercise.demoUrl,
       sets: pde.sets,
@@ -63,19 +63,19 @@ export default async function SessionPage({ params }: Props) {
       if (parsed.randomDay && Array.isArray(parsed.exercises)) {
         isRandomDay = true;
         const parsedExercises: { exerciseId: string; sets: number; reps: number; restSeconds: number; orderIndex: number; }[] = parsed.exercises;
-        const exerciseIds = parsedExercises.map((e) => e.exerciseId);
+        const exerciseIds = parsedExercises.map((e: any) => e.exerciseId);
         const exerciseRows = await db.exercise.findMany({
           where: { id: { in: exerciseIds } },
           select: { id: true, name: true, categories: { select: { name: true } }, description: true, demoUrl: true },
         });
-        const exerciseMap = new Map(exerciseRows.map((ex) => [ex.id, ex]));
-        exercises = parsedExercises.map((e) => {
+        const exerciseMap = new Map(exerciseRows.map((ex: any) => [ex.id, ex]));
+        exercises = parsedExercises.map((e: any) => {
           const ex = exerciseMap.get(e.exerciseId);
           return {
             planDayExerciseId: `random-${e.exerciseId}`,
             exerciseId: e.exerciseId,
             exerciseName: ex?.name ?? "Unknown",
-            categories: ex?.categories?.map((c) => c.name) ?? [],
+            categories: ex?.categories?.map((c: any) => c.name) ?? [],
             description: ex?.description,
             demoUrl: ex?.demoUrl,
             sets: e.sets,

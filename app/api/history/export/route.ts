@@ -30,14 +30,14 @@ export async function GET() {
 
   const rows = [
     ["Date", "Plan", "Day", "Exercise", "Categories", "Set", "Weight (kg)", "Reps", "Volume"],
-    ...sets.map((s) => {
+    ...sets.map((s: any) => {
       const weight = s.weightKg ?? 0;
       return [
         s.session.completedAt!.toISOString().slice(0, 10),
         s.session.planDay?.plan?.title ?? "Random Day",
         s.session.planDay?.label ?? "",
         s.exercise.name,
-        s.exercise.categories.map((c) => c.name).join("; "),
+        s.exercise.categories.map((c: any) => c.name).join("; "),
         String(s.setNumber),
         String(weight),
         String(s.repsCompleted),
@@ -46,7 +46,7 @@ export async function GET() {
     }),
   ];
 
-  const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+  const csv = rows.map((r: any) => r.map((v: string) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
 
   return new NextResponse(csv, {
     headers: {

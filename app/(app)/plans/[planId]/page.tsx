@@ -141,7 +141,7 @@ export default async function PlanDetailPage({ params }: Props) {
         </div>
 
         <div className="space-y-2">
-          {plan.planDays.map((day) => (
+          {plan.planDays.map((day: any) => (
             <div key={day.id} className="rounded-xl border p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm">{DAY_NAMES[day.dayOfWeek]}</span>
@@ -153,12 +153,12 @@ export default async function PlanDetailPage({ params }: Props) {
                 <p className="text-xs text-muted-foreground">Rest day</p>
               ) : (
                 <div className="space-y-1.5">
-                  {day.planDayExercises.map((pde) => (
+                  {day.planDayExercises.map((pde: any) => (
                     <div key={pde.id} className="flex items-center justify-between text-sm">
                       <div>
                         <span className="font-medium">{pde.exercise.name}</span>
                         <Badge variant="outline" className="ml-1.5 text-[10px] py-0">
-                          {pde.exercise.categories.map((c) => c.name).join(", ")}
+                          {pde.exercise.categories.map((c: any) => c.name).join(", ")}
                         </Badge>
                       </div>
                       <span className="text-xs text-muted-foreground shrink-0 ml-2">

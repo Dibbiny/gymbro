@@ -123,7 +123,7 @@ export async function PATCH(
           weekNumber: day.weekNumber,
           label: day.label ?? null,
           planDayExercises: {
-            create: day.exercises.map((ex) => ({
+            create: day.exercises.map((ex: any) => ({
               exerciseId: ex.exerciseId,
               orderIndex: ex.orderIndex,
               sets: ex.sets,
@@ -166,7 +166,7 @@ export async function DELETE(
       where: { planId },
       select: { id: true },
     });
-    const enrollmentIds = enrollments.map((e) => e.id);
+    const enrollmentIds = enrollments.map((e: any) => e.id);
 
     // Detach sessions from the enrollment + plan day (keep history intact)
     await tx.trainingSession.updateMany({

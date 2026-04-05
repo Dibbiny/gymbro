@@ -22,7 +22,7 @@ export default async function ExplorePage() {
       },
     },
     orderBy: { createdAt: "desc" },
-  }).then((rows) => rows.map((r) => r.following));
+  }).then((rows: any[]) => rows.map((r: any) => r.following));
 
   return (
     <div className="space-y-4">

@@ -26,8 +26,8 @@ export default async function ExercisesPage() {
     },
   });
 
-  const approved = exercises.filter((e) => e.status === "APPROVED");
-  const myPending = exercises.filter((e) => e.status === "PENDING");
+  const approved = exercises.filter((e: any) => e.status === "APPROVED");
+  const myPending = exercises.filter((e: any) => e.status === "PENDING");
 
   return (
     <div className="space-y-6">
@@ -49,11 +49,11 @@ export default async function ExercisesPage() {
             <Clock className="h-4 w-4" /> My pending submissions ({myPending.length})
           </h2>
           <div className="space-y-2">
-            {myPending.map((ex) => (
+            {myPending.map((ex: any) => (
               <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
                 <div>
                   <p className="text-sm font-medium">{ex.name}</p>
-                  <p className="text-xs text-muted-foreground">{ex.categories.map((c) => c.name).join(", ")}</p>
+                  <p className="text-xs text-muted-foreground">{ex.categories.map((c: any) => c.name).join(", ")}</p>
                 </div>
                 <Badge variant="secondary" className="text-xs">Pending</Badge>
               </div>
@@ -72,7 +72,7 @@ export default async function ExercisesPage() {
               <p className="text-sm text-muted-foreground">No approved exercises yet</p>
             </div>
           ) : (
-            approved.map((ex) => (
+            approved.map((ex: any) => (
               <div key={ex.id} className="rounded-lg border px-3 py-2.5 space-y-0.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium">{ex.name}</p>
@@ -82,7 +82,7 @@ export default async function ExercisesPage() {
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     )}
-                    <Badge variant="outline" className="text-xs">{ex.categories.map((c) => c.name).join(", ")}</Badge>
+                    <Badge variant="outline" className="text-xs">{ex.categories.map((c: any) => c.name).join(", ")}</Badge>
                   </div>
                 </div>
                 {ex.description && (
