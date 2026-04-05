@@ -23,8 +23,11 @@ export default async function PlanDetailPage({ params }: Props) {
     where: { id: planId },
     include: {
       creator: { select: { id: true, username: true, avatarUrl: true } },
+      // Only fetch week 1 as the representative schedule — avoids loading
+      // all 36+ days for a 12-week plan on every page view
       planDays: {
-        orderBy: [{ weekNumber: "asc" }, { dayOfWeek: "asc" }],
+        where: { weekNumber: 1 },
+        orderBy: { dayOfWeek: "asc" },
         include: {
           planDayExercises: {
             orderBy: { orderIndex: "asc" },
@@ -69,12 +72,7 @@ export default async function PlanDetailPage({ params }: Props) {
   const myRating = plan.planRatings[0]?.rating ?? 0;
   const enrollment = plan.planEnrollments[0];
 
-  // Group days by week
-  const weeks = new Map<number, typeof plan.planDays>();
-  for (const day of plan.planDays) {
-    if (!weeks.has(day.weekNumber)) weeks.set(day.weekNumber, []);
-    weeks.get(day.weekNumber)!.push(day);
-  }
+  // planDays is already filtered to week 1 only (representative schedule)
 
   return (
     <div className="space-y-5">
@@ -135,46 +133,44 @@ export default async function PlanDetailPage({ params }: Props) {
 
       {/* Training days */}
       <section className="space-y-4">
-        <h2 className="font-semibold">Training Schedule</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Training Schedule</h2>
+          {plan.durationWeeks > 1 && (
+            <span className="text-xs text-muted-foreground">Week 1 preview · {plan.durationWeeks} weeks total</span>
+          )}
+        </div>
 
-        {Array.from(weeks.entries()).map(([week, days]) => (
-          <div key={week} className="space-y-2">
-            {plan.durationWeeks > 1 && (
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Week {week}
-              </p>
-            )}
-            {days.map((day) => (
-              <div key={day.id} className="rounded-xl border p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm">{DAY_NAMES[day.dayOfWeek]}</span>
-                  {day.label && (
-                    <Badge variant="secondary" className="text-xs">{day.label}</Badge>
-                  )}
-                </div>
-                {day.planDayExercises.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Rest day</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {day.planDayExercises.map((pde) => (
-                      <div key={pde.id} className="flex items-center justify-between text-sm">
-                        <div>
-                          <span className="font-medium">{pde.exercise.name}</span>
-                          <Badge variant="outline" className="ml-1.5 text-[10px] py-0">
-                            {pde.exercise.categories.map((c) => c.name).join(", ")}
-                          </Badge>
-                        </div>
-                        <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                          {pde.sets}×{pde.reps} · {pde.restSeconds}s rest
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+        <div className="space-y-2">
+          {plan.planDays.map((day) => (
+            <div key={day.id} className="rounded-xl border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-sm">{DAY_NAMES[day.dayOfWeek]}</span>
+                {day.label && (
+                  <Badge variant="secondary" className="text-xs">{day.label}</Badge>
                 )}
               </div>
-            ))}
-          </div>
-        ))}
+              {day.planDayExercises.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Rest day</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {day.planDayExercises.map((pde) => (
+                    <div key={pde.id} className="flex items-center justify-between text-sm">
+                      <div>
+                        <span className="font-medium">{pde.exercise.name}</span>
+                        <Badge variant="outline" className="ml-1.5 text-[10px] py-0">
+                          {pde.exercise.categories.map((c) => c.name).join(", ")}
+                        </Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                        {pde.sets}×{pde.reps} · {pde.restSeconds}s rest
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );

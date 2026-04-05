@@ -43,6 +43,7 @@ export function PlanActions({
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
 
   const isEnrolled = enrollment?.isActive;
+  const [isUnenrolling, setIsUnenrolling] = useState(false);
 
   async function handleEnroll() {
     setIsEnrolling(true);
@@ -63,10 +64,15 @@ export function PlanActions({
   }
 
   async function handleUnenroll() {
-    const res = await fetch(`/api/plans/${planId}/enroll`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Failed to unenroll"); return; }
-    toast.success("Unenrolled from plan");
-    router.refresh();
+    setIsUnenrolling(true);
+    try {
+      const res = await fetch(`/api/plans/${planId}/enroll`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Failed to unenroll"); return; }
+      toast.success("Unenrolled from plan");
+      router.refresh();
+    } finally {
+      setIsUnenrolling(false);
+    }
   }
 
   async function handleRate(rating: number) {
@@ -132,9 +138,9 @@ export function PlanActions({
       {/* Enroll / unenroll + clone */}
       <div className="flex gap-2">
           {isEnrolled ? (
-            <Button variant="outline" size="sm" onClick={handleUnenroll} className="flex-1">
+            <Button variant="outline" size="sm" onClick={handleUnenroll} disabled={isUnenrolling} className="flex-1">
               <CheckCircle2 className="h-4 w-4 mr-1 text-primary" />
-              Enrolled
+              {isUnenrolling ? "Leaving..." : "Enrolled"}
             </Button>
           ) : (
             <>

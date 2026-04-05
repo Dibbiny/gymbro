@@ -6,5 +6,7 @@ export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const categories = await db.category.findMany({ orderBy: { name: "asc" } });
-  return NextResponse.json({ categories });
+  return NextResponse.json({ categories }, {
+    headers: { "Cache-Control": "private, max-age=300, stale-while-revalidate=600" },
+  });
 }
