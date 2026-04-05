@@ -11,7 +11,7 @@ import { SetLogger } from "@/components/training/SetLogger";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Pause, Play, Flag, ChevronLeft, ChevronRight, Dumbbell, Info } from "lucide-react";
+import { Pause, Play, Flag, ChevronLeft, ChevronRight, Dumbbell, Info, Plus, Minus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +48,8 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
   const [isFinishing, setIsFinishing] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  // Per-exercise set count overrides (exerciseId → total sets)
+  const [setCountOverrides, setSetCountOverrides] = useState<Map<string, number>>(new Map());
   const [shareDialog, setShareDialog] = useState<{
     sessionId: string;
     enrollmentId?: string;
@@ -66,7 +68,6 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
     elapsedSeconds,
     logSet,
     markSetSaved,
-    advanceSet,
     startRest,
     stopRest,
     reset,
@@ -87,17 +88,36 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
 
   const currentExercise = exercises[currentExerciseIndex];
 
+  function effectiveSets(ex: ExerciseEntry) {
+    return setCountOverrides.get(ex.exerciseId) ?? ex.sets;
+  }
+
   function getSetLog(exerciseId: string, setNumber: number) {
     return setLogs.find((l) => l.exerciseId === exerciseId && l.setNumber === setNumber);
   }
 
-  async function handleSetComplete(weightKg: number | null, repsCompleted: number) {
+  function addSet(exerciseId: string, currentCount: number) {
+    setSetCountOverrides((prev) => new Map(prev).set(exerciseId, currentCount + 1));
+  }
+
+  function removeSet(ex: ExerciseEntry, currentCount: number) {
+    if (currentCount <= 1) return;
+    const newCount = currentCount - 1;
+    setSetCountOverrides((prev) => new Map(prev).set(ex.exerciseId, newCount));
+    // If we're currently on the removed set, step back
+    if (currentSet > newCount) {
+      useTrainingSession.setState({ currentSet: newCount });
+    }
+  }
+
+  async function handleSetComplete(weightKg: number | null, repsCompleted: number, setNumber?: number) {
     if (!currentExercise) return;
+    const targetSet = setNumber ?? currentSet;
 
     // Optimistically mark in store
     logSet({
       exerciseId: currentExercise.exerciseId,
-      setNumber: currentSet,
+      setNumber: targetSet,
       weightKg,
       repsCompleted,
       saved: false,
@@ -109,20 +129,24 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         exerciseId: currentExercise.exerciseId,
-        setNumber: currentSet,
+        setNumber: targetSet,
         weightKg,
         repsCompleted,
       }),
     });
 
     if (res.ok) {
-      markSetSaved(currentExercise.exerciseId, currentSet);
+      markSetSaved(currentExercise.exerciseId, targetSet);
     } else {
       toast.error("Failed to save set — check your connection");
       return;
     }
 
-    const isLastSetOfExercise = currentSet >= currentExercise.sets;
+    // If this was an edit of an already-saved set, don't advance
+    if (setNumber !== undefined) return;
+
+    const totalSets = effectiveSets(currentExercise);
+    const isLastSetOfExercise = currentSet >= totalSets;
     const isLastExercise = currentExerciseIndex >= exercises.length - 1;
 
     if (isLastSetOfExercise && isLastExercise) {
@@ -135,7 +159,12 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
     startRest();
     workerStartRest(currentExercise.restSeconds);
 
-    advanceSet();
+    // Advance to next set or next exercise (respecting effective set count)
+    if (currentSet < totalSets) {
+      useTrainingSession.setState({ currentSet: currentSet + 1 });
+    } else {
+      useTrainingSession.setState({ currentExerciseIndex: currentExerciseIndex + 1, currentSet: 1 });
+    }
   }
 
   function handleTogglePause() {
@@ -276,7 +305,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
           const completedSets = setLogs.filter(
             (l) => l.exerciseId === ex.exerciseId && l.saved
           ).length;
-          const done = completedSets >= ex.sets;
+          const done = completedSets >= effectiveSets(ex);
           return (
             <button
               key={ex.exerciseId}
@@ -357,7 +386,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
               <Info className="h-4 w-4" />
             </button>
             <span className="text-sm text-muted-foreground">
-              {currentExercise.sets} sets × {currentExercise.reps} reps
+              {effectiveSets(currentExercise)} sets × {currentExercise.reps} reps
             </span>
           </div>
         </div>
@@ -366,7 +395,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
 
         {/* All sets for current exercise */}
         <div className="space-y-3">
-          {Array.from({ length: currentExercise.sets }, (_, i) => i + 1).map((setNum) => {
+          {Array.from({ length: effectiveSets(currentExercise) }, (_, i) => i + 1).map((setNum) => {
             const log = getSetLog(currentExercise.exerciseId, setNum);
             const isActive = setNum === currentSet;
             const isSaved = log?.saved ?? false;
@@ -378,20 +407,38 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
                 key={setNum}
                 sessionId={sessionId}
                 exerciseId={currentExercise.exerciseId}
-                exerciseName={currentExercise.exerciseName}
                 setNumber={setNum}
-                totalSets={currentExercise.sets}
+                totalSets={effectiveSets(currentExercise)}
                 defaultReps={currentExercise.reps}
-                onComplete={handleSetComplete}
+                savedWeight={log?.weightKg}
+                savedReps={log?.repsCompleted}
+                onComplete={(w, r) => handleSetComplete(w, r, isSaved ? setNum : undefined)}
                 isSaved={isSaved}
               />
             );
           })}
         </div>
 
+        {/* Add / remove set buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => removeSet(currentExercise, effectiveSets(currentExercise))}
+            disabled={effectiveSets(currentExercise) <= 1}
+            className="flex-1 flex items-center justify-center gap-1 rounded-lg border border-border py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Minus className="h-3 w-3" /> Remove set
+          </button>
+          <button
+            onClick={() => addSet(currentExercise.exerciseId, effectiveSets(currentExercise))}
+            className="flex-1 flex items-center justify-center gap-1 rounded-lg border border-border py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+          >
+            <Plus className="h-3 w-3" /> Add set
+          </button>
+        </div>
+
         {/* Sets progress summary */}
         <div className="flex gap-1.5 flex-wrap">
-          {Array.from({ length: currentExercise.sets }, (_, i) => i + 1).map((setNum) => {
+          {Array.from({ length: effectiveSets(currentExercise) }, (_, i) => i + 1).map((setNum) => {
             const log = getSetLog(currentExercise.exerciseId, setNum);
             return (
               <div
