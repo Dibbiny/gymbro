@@ -18,6 +18,7 @@ export interface SetLogEntry {
   setNumber: number;
   weightKg: number | null;
   repsCompleted: number;
+  notes?: string | null;
   saved: boolean;
 }
 
@@ -26,6 +27,7 @@ export interface PreloadedSetLog {
   setNumber: number;
   weightKg: number | null;
   repsCompleted: number;
+  notes?: string | null;
 }
 
 interface TrainingSessionState {

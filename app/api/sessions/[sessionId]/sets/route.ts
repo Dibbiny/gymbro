@@ -8,6 +8,7 @@ const logSetSchema = z.object({
   setNumber: z.number().int().min(1),
   weightKg: z.number().min(0).optional(),
   repsCompleted: z.number().int().min(0),
+  notes: z.string().max(500).optional(),
 });
 
 // POST /api/sessions/[sessionId]/sets — log a completed set
@@ -47,10 +48,14 @@ export async function POST(
   const setLog = existing
     ? await db.setLog.update({
         where: { id: existing.id },
-        data: { weightKg: parsed.data.weightKg ?? null, repsCompleted: parsed.data.repsCompleted },
+        data: {
+          weightKg: parsed.data.weightKg ?? null,
+          repsCompleted: parsed.data.repsCompleted,
+          notes: parsed.data.notes ?? null,
+        },
       })
     : await db.setLog.create({
-        data: { sessionId, ...parsed.data, weightKg: parsed.data.weightKg ?? null },
+        data: { sessionId, ...parsed.data, weightKg: parsed.data.weightKg ?? null, notes: parsed.data.notes ?? null },
       });
 
   return NextResponse.json({ setLog }, { status: 201 });
@@ -79,7 +84,7 @@ export async function GET(
       session: { userId: session.user.id, completedAt: { not: null } },
     },
     orderBy: { loggedAt: "desc" },
-    select: { weightKg: true, repsCompleted: true },
+    select: { weightKg: true, repsCompleted: true, notes: true },
   });
 
   return NextResponse.json({ lastLog });

@@ -110,7 +110,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
     }
   }
 
-  async function handleSetComplete(weightKg: number | null, repsCompleted: number, setNumber?: number) {
+  async function handleSetComplete(weightKg: number | null, repsCompleted: number, notes: string | null, setNumber?: number) {
     if (!currentExercise) return;
     const targetSet = setNumber ?? currentSet;
 
@@ -120,6 +120,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
       setNumber: targetSet,
       weightKg,
       repsCompleted,
+      notes,
       saved: false,
     });
 
@@ -132,6 +133,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
         setNumber: targetSet,
         weightKg,
         repsCompleted,
+        ...(notes ? { notes } : {}),
       }),
     });
 
@@ -412,7 +414,8 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
                 defaultReps={currentExercise.reps}
                 savedWeight={log?.weightKg}
                 savedReps={log?.repsCompleted}
-                onComplete={(w, r) => handleSetComplete(w, r, isSaved ? setNum : undefined)}
+                savedNotes={log?.notes}
+                onComplete={(w, r, n) => handleSetComplete(w, r, n, isSaved ? setNum : undefined)}
                 isSaved={isSaved}
               />
             );

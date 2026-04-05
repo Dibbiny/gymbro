@@ -26,7 +26,7 @@ export default async function SessionPage({ params }: Props) {
         },
       },
       setLogs: {
-        select: { exerciseId: true, setNumber: true, weightKg: true, repsCompleted: true },
+        select: { exerciseId: true, setNumber: true, weightKg: true, repsCompleted: true, notes: true },
         orderBy: [{ exerciseId: "asc" }, { setNumber: "asc" }],
       },
     },

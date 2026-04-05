@@ -211,6 +211,7 @@ model SetLog {
   setNumber     Int
   weightKg      Float?
   repsCompleted Int
+  notes         String?
   loggedAt      DateTime @default(now())
 
   sessionId String

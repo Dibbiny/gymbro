@@ -127,11 +127,16 @@ export default async function SessionDetailPage({ params }: Props) {
               </div>
               <div className="space-y-1">
                 {logs.map((log) => (
-                  <div key={log.id} className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground text-xs">Set {log.setNumber}</span>
-                    <span className="font-medium">
-                      {log.weightKg ? `${log.weightKg} kg` : "BW"} × {log.repsCompleted} reps
-                    </span>
+                  <div key={log.id} className="space-y-0.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground text-xs">Set {log.setNumber}</span>
+                      <span className="font-medium">
+                        {log.weightKg ? `${log.weightKg} kg` : "BW"} × {log.repsCompleted} reps
+                      </span>
+                    </div>
+                    {log.notes && (
+                      <p className="text-xs text-muted-foreground italic pl-1">💬 {log.notes}</p>
+                    )}
                   </div>
                 ))}
               </div>
