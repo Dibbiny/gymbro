@@ -26,7 +26,7 @@ export default async function AdminAnnouncementsPage() {
           <p className="text-sm text-muted-foreground">No announcements yet.</p>
         ) : (
           <div className="space-y-2">
-            {announcements.map((a) => (
+            {announcements.map((a: any) => (
               <div key={a.id} className="rounded-xl border p-3.5 space-y-1.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
