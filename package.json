@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack --port 3002",
-    "build": "prisma generate && next build --webpack",
+    "build": "prisma generate && opennextjs-cloudflare build",
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",
