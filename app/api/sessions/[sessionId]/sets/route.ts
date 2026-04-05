@@ -6,7 +6,7 @@ import { z } from "zod";
 const logSetSchema = z.object({
   exerciseId: z.string(),
   setNumber: z.number().int().min(1),
-  weightKg: z.number().min(0).optional(),
+  weightKg: z.number().min(0).nullish(),
   repsCompleted: z.number().int().min(0),
   notes: z.string().max(500).optional(),
 });
