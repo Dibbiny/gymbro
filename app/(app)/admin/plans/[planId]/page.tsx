@@ -26,7 +26,7 @@ export default async function AdminPlanDetailPage({ params }: Props) {
         include: {
           planDayExercises: {
             orderBy: { orderIndex: "asc" },
-            include: { exercise: { select: { name: true, description: true, demoUrl: true } } },
+            include: { exercise: { select: { name: true, description: true, demoUrl: true, categories: { select: { name: true } } } } },
           },
         },
       },
@@ -106,6 +106,7 @@ export default async function AdminPlanDetailPage({ params }: Props) {
                           name={pde.exercise.name}
                           description={pde.exercise.description}
                           demoUrl={pde.exercise.demoUrl}
+                          categories={pde.exercise.categories.map((c: { name: string }) => c.name)}
                         />
                       )}
                     </div>
