@@ -93,7 +93,7 @@ export async function PATCH(
   });
 
   if (!plan) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (plan.creatorId !== session.user.id) {
+  if (plan.creatorId !== session.user.id && session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

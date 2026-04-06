@@ -59,9 +59,10 @@ const STEPS = ["Details", "Training Days", "Review"];
 interface Props {
   planId?: string;
   initialData?: PlanForm;
+  redirectTo?: string;
 }
 
-export function PlanBuilder({ planId, initialData }: Props) {
+export function PlanBuilder({ planId, initialData, redirectTo }: Props) {
   const router = useRouter();
   const isEditing = !!planId;
   const [step, setStep] = useState(0);
@@ -130,7 +131,7 @@ export function PlanBuilder({ planId, initialData }: Props) {
         return;
       }
       toast.success(isEditing ? "Plan updated!" : "Plan created!");
-      router.push(`/plans/${isEditing ? planId : json.plan.id}`);
+      router.push(redirectTo ?? `/plans/${isEditing ? planId : json.plan.id}`);
       router.refresh();
     } finally {
       setIsSubmitting(false);
