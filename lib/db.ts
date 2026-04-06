@@ -11,6 +11,8 @@ function createPrismaClient() {
     connectionString,
     // Supabase requires SSL in production
     ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
+    // 1 connection per serverless instance — Transaction mode pooler handles the rest
+    max: process.env.NODE_ENV === "production" ? 1 : 10,
   });
   return new PrismaClient({
     adapter,
