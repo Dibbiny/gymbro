@@ -36,7 +36,7 @@ yarn-error.log*
 # vercel
 .vercel
 
-# cloudflare / opennext
+# cloudflare / opennext (keep for cf_branch, ignore on main)
 .open-next
 .wrangler
 
