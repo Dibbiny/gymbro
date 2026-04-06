@@ -19,11 +19,12 @@ interface Props {
 
 export default async function ProfilePage({ params, searchParams }: Props) {
   const session = await auth();
-  const { username } = await params;
+  const { username: rawUsername } = await params;
+  const username = rawUsername.toLowerCase();
   const { list } = await searchParams;
 
-  const user = await db.user.findUnique({
-    where: { username },
+  const user = await db.user.findFirst({
+    where: { username: { equals: username, mode: "insensitive" } },
     select: {
       id: true,
       username: true,

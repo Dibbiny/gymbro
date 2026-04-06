@@ -25,7 +25,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const { username, email, password } = parsed.data;
+    const { username: rawUsername, email, password } = parsed.data;
+    const username = rawUsername.toLowerCase();
 
     const existingUser = await db.user.findFirst({
       where: { OR: [{ username }, { email }] },

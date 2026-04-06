@@ -20,10 +20,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const { username, password } = parsed.data;
+        const { username: rawUsername, password } = parsed.data;
+        const username = rawUsername.toLowerCase();
 
-        const user = await db.user.findUnique({
-          where: { username },
+        const user = await db.user.findFirst({
+          where: { username: { equals: username, mode: "insensitive" } },
           select: {
             id: true,
             username: true,
