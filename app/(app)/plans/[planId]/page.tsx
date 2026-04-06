@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlanActions } from "@/components/plans/PlanActions";
 import { PlanOwnerActions } from "@/components/plans/PlanOwnerActions";
+import { ExerciseInfoButton } from "@/components/plans/ExerciseInfoButton";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -31,7 +32,7 @@ export default async function PlanDetailPage({ params }: Props) {
         include: {
           planDayExercises: {
             orderBy: { orderIndex: "asc" },
-            include: { exercise: { select: { id: true, name: true, categories: { select: { name: true } } } } },
+            include: { exercise: { select: { id: true, name: true, description: true, demoUrl: true, categories: { select: { name: true } } } } },
           },
         },
       },
@@ -155,9 +156,15 @@ export default async function PlanDetailPage({ params }: Props) {
                 <div className="space-y-1.5">
                   {day.planDayExercises.map((pde: any) => (
                     <div key={pde.id} className="flex items-center justify-between text-sm">
-                      <div>
-                        <span className="font-medium">{pde.exercise.name}</span>
-                        <Badge variant="outline" className="ml-1.5 text-[10px] py-0">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="font-medium truncate">{pde.exercise.name}</span>
+                        <ExerciseInfoButton
+                          name={pde.exercise.name}
+                          description={pde.exercise.description}
+                          demoUrl={pde.exercise.demoUrl}
+                          categories={pde.exercise.categories.map((c: any) => c.name)}
+                        />
+                        <Badge variant="outline" className="ml-0.5 text-[10px] py-0 shrink-0">
                           {pde.exercise.categories.map((c: any) => c.name).join(", ")}
                         </Badge>
                       </div>
