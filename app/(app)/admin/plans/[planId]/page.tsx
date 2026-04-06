@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Globe, Lock, Pencil, Users, Calendar } from "lucide-react";
 import { AdminPlanDeleteButton } from "@/components/admin/AdminPlanDeleteButton";
+import { ExerciseInfoButton } from "@/components/plans/ExerciseInfoButton";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -25,7 +26,7 @@ export default async function AdminPlanDetailPage({ params }: Props) {
         include: {
           planDayExercises: {
             orderBy: { orderIndex: "asc" },
-            include: { exercise: { select: { name: true } } },
+            include: { exercise: { select: { name: true, description: true, demoUrl: true } } },
           },
         },
       },
@@ -98,7 +99,16 @@ export default async function AdminPlanDetailPage({ params }: Props) {
               <div className="space-y-1">
                 {day.planDayExercises.map((pde: any) => (
                   <div key={pde.id} className="flex items-center justify-between text-sm">
-                    <span>{pde.exercise.name}</span>
+                    <div className="flex items-center gap-1">
+                      <span>{pde.exercise.name}</span>
+                      {(pde.exercise.demoUrl || pde.exercise.description) && (
+                        <ExerciseInfoButton
+                          name={pde.exercise.name}
+                          description={pde.exercise.description}
+                          demoUrl={pde.exercise.demoUrl}
+                        />
+                      )}
+                    </div>
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
                       {pde.sets}×{pde.reps} · {pde.restSeconds}s
                     </span>
