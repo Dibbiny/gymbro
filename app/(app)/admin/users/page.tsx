@@ -5,6 +5,7 @@ import { xpToLevel } from "@/lib/xp";
 import { UserRoleToggle } from "@/components/admin/UserRoleToggle";
 import { UserDeleteButton } from "@/components/admin/UserDeleteButton";
 import { auth } from "@/lib/auth";
+import Link from "next/link";
 
 export default async function AdminUsersPage() {
   const session = await auth();
@@ -38,6 +39,7 @@ export default async function AdminUsersPage() {
           return (
             <div key={user.id} className="rounded-xl border p-3.5 space-y-2">
               <div className="flex items-center gap-3">
+                <Link href={`/admin/users/${user.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarImage src={user.avatarUrl ?? undefined} />
                   <AvatarFallback className="text-xs">
@@ -53,6 +55,7 @@ export default async function AdminUsersPage() {
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
+                </Link>
                 {!isSelf && (
                   <div className="flex gap-1.5 shrink-0">
                     <UserRoleToggle userId={user.id} currentRole={user.role} />
