@@ -90,18 +90,18 @@ export async function POST(
     trainingSession.planDay?.label ??
     (trainingSession.planDay ? DAY_NAMES[trainingSession.planDay.dayOfWeek] : "workout");
 
-  const prompt = `You are an encouraging fitness coach. Write a 2-3 sentence post-workout summary for someone who just finished their ${workoutLabel}.
+  const prompt = `You are an encouraging fitness coach. Write a single sentence (max 180 characters) post-workout caption for someone who just finished their ${workoutLabel}.
 
 Today's performance:
 ${todayLines.join("\n")}${prevSummary}
 
 Rules:
-- Be specific — mention exercise names, weights, or reps where relevant
-- If previous session data exists, mention improvements or consistency
-- Keep it under 200 characters total — it's a social media caption
-- Energetic and motivating, first person ("I crushed..." or second person "You hit...")
-- No hashtags, no emojis
-- Return plain text only, no JSON`;
+- Exactly ONE sentence, complete, no ellipsis
+- Be specific — mention at least one exercise name or a weight/rep number from the data
+- If previous session data exists, call out an improvement (e.g. "up from X kg last time")
+- Energetic and motivating, second person ("You crushed...", "You hit...")
+- No hashtags, no emojis, no quotation marks
+- Return plain text only, nothing else`;
 
   const geminiRes = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -110,7 +110,7 @@ Rules:
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 100 },
+        generationConfig: { maxOutputTokens: 80 },
       }),
     }
   );
@@ -122,6 +122,13 @@ Rules:
 
   const data = await geminiRes.json();
   const summary: string = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+
+  // Discard if it looks incomplete (no sentence-ending punctuation)
+  const endsCleanly = /[.!?]$/.test(summary);
+  if (!summary || !endsCleanly) {
+    console.warn("AI summary looks incomplete:", summary);
+    return NextResponse.json({ summary: null });
+  }
 
   return NextResponse.json({ summary });
 }
