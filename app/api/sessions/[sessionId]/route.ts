@@ -139,6 +139,8 @@ export async function POST(
 
   const body = await request.json().catch(() => ({}));
   const notes: string | undefined = body?.notes;
+  const clientElapsedSeconds: number | undefined =
+    typeof body?.elapsedSeconds === "number" ? body.elapsedSeconds : undefined;
 
   // Check if this completes the whole plan
   let planCompleted = false;
@@ -161,10 +163,26 @@ export async function POST(
 
   const xpEarned = awardXP(trainingSession.setLogs.length);
 
+  const completedAt = new Date();
+
+  // If the client sent actual elapsed seconds, back-compute pausedDuration so
+  // the display formula (completedAt - startedAt - pausedDuration) shows real training time.
+  let pausedDurationOverride: number | undefined;
+  if (clientElapsedSeconds !== undefined && clientElapsedSeconds > 0) {
+    const wallClockSeconds = Math.floor(
+      (completedAt.getTime() - new Date(trainingSession.startedAt).getTime()) / 1000
+    );
+    pausedDurationOverride = Math.max(0, wallClockSeconds - clientElapsedSeconds);
+  }
+
   await db.$transaction(async (tx) => {
     await tx.trainingSession.update({
       where: { id: sessionId },
-      data: { completedAt: new Date(), notes: notes ?? null },
+      data: {
+        completedAt,
+        notes: notes ?? null,
+        ...(pausedDurationOverride !== undefined ? { pausedDuration: pausedDurationOverride } : {}),
+      },
     });
 
     await tx.user.update({

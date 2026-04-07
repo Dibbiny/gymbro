@@ -204,7 +204,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
       const res = await fetch(`/api/sessions/${sessionId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ elapsedSeconds }),
       });
       const data = await res.json();
       if (!res.ok) {
