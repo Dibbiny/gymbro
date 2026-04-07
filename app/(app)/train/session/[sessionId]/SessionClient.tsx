@@ -406,7 +406,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
 
             return (
               <SetLogger
-                key={setNum}
+                key={`${currentExercise.exerciseId}-${setNum}`}
                 sessionId={sessionId}
                 exerciseId={currentExercise.exerciseId}
                 setNumber={setNum}

@@ -134,7 +134,7 @@ export default async function SessionDetailPage({ params }: Props) {
                         {log.weightKg ? `${log.weightKg} kg` : "BW"} × {log.repsCompleted} reps
                       </span>
                     </div>
-                    {log.notes && (
+                    {isOwner && log.notes && (
                       <p className="text-xs text-muted-foreground italic pl-1">💬 {log.notes}</p>
                     )}
                   </div>
