@@ -1,4 +1,4 @@
-import { PlanBuilder } from "@/components/plans/PlanBuilder";
+import { NewPlanClient } from "@/components/plans/NewPlanClient";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -11,7 +11,7 @@ export default function NewPlanPage() {
         </Link>
         <h1 className="text-xl font-bold">Create Plan</h1>
       </div>
-      <PlanBuilder />
+      <NewPlanClient />
     </div>
   );
 }
