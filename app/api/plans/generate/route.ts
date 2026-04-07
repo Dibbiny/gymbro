@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
+export const maxDuration = 60; // seconds — requires Vercel Pro or higher
+
 const generateSchema = z.object({
   daysPerWeek: z.number().int().min(1).max(7),
   age: z.number().int().min(10).max(100),
@@ -112,8 +114,13 @@ RULES:
 
   if (!geminiRes.ok) {
     const err = await geminiRes.text();
-    console.error("Gemini API error:", err);
-    return NextResponse.json({ error: "AI generation failed" }, { status: 502 });
+    console.error("Gemini API error:", geminiRes.status, err);
+    let detail = "AI generation failed";
+    try {
+      const parsed = JSON.parse(err);
+      detail = parsed?.error?.message ?? detail;
+    } catch {}
+    return NextResponse.json({ error: detail }, { status: 502 });
   }
 
   const geminiData = await geminiRes.json();
