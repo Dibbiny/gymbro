@@ -110,8 +110,7 @@ Rules:
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 300 },
-        thinkingConfig: { thinkingBudget: 0 },
+        generationConfig: { maxOutputTokens: 1024 },
       }),
     }
   );
