@@ -11,7 +11,7 @@ import { SetLogger } from "@/components/training/SetLogger";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Pause, Play, Flag, ChevronLeft, ChevronRight, Dumbbell, Info, Plus, Minus } from "lucide-react";
+import { Pause, Play, Flag, ChevronLeft, ChevronRight, Dumbbell, Info, Plus, Minus, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,7 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
     enrollmentId?: string;
     planCompleted: boolean;
   } | null>(null);
+  const [overloadHints, setOverloadHints] = useState<Map<string, string>>(new Map());
 
   const {
     initSession,
@@ -84,6 +85,20 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
       initSession(sessionId, exercises);
     }
     return () => reset();
+  }, [sessionId]);
+
+  // Fetch overload hints once on mount
+  useEffect(() => {
+    fetch(`/api/sessions/${sessionId}/overload-hints`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.hints) {
+          const map = new Map<string, string>();
+          for (const h of d.hints) map.set(h.exerciseId, h.hint);
+          setOverloadHints(map);
+        }
+      })
+      .catch(() => {});
   }, [sessionId]);
 
   const currentExercise = exercises[currentExerciseIndex];
@@ -392,6 +407,15 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
             </span>
           </div>
         </div>
+
+        {overloadHints.get(currentExercise.exerciseId) && (
+          <div className="flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2">
+            <Sparkles className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              {overloadHints.get(currentExercise.exerciseId)}
+            </p>
+          </div>
+        )}
 
         <Separator />
 

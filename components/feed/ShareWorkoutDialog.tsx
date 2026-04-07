@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Trophy, Share2, ImagePlus, X } from "lucide-react";
+import { Dumbbell, Trophy, Share2, ImagePlus, X, Sparkles, Loader2 } from "lucide-react";
 
 interface Props {
   sessionId?: string;
@@ -27,7 +27,20 @@ export function ShareWorkoutDialog({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open || !sessionId) return;
+    setAiSummary(null);
+    setLoadingSummary(true);
+    fetch(`/api/sessions/${sessionId}/ai-summary`, { method: "POST" })
+      .then((r) => r.json())
+      .then((d) => { if (d.summary) setAiSummary(d.summary); })
+      .catch(() => {})
+      .finally(() => setLoadingSummary(false));
+  }, [open, sessionId]);
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -93,6 +106,30 @@ export function ShareWorkoutDialog({
         </DialogHeader>
 
         <div className="space-y-3 pt-1">
+          {/* AI summary suggestion */}
+          {loadingSummary && (
+            <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+              AI is writing your recap...
+            </div>
+          )}
+          {aiSummary && !loadingSummary && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs font-medium text-primary">AI recap</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">{aiSummary}</p>
+              <button
+                type="button"
+                onClick={() => setBody(aiSummary)}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Use this caption
+              </button>
+            </div>
+          )}
+
           <textarea
             rows={3}
             placeholder={
