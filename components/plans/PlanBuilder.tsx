@@ -115,6 +115,7 @@ export function PlanBuilder({ planId, initialData, redirectTo }: Props) {
   }
 
   async function onSubmit(data: PlanForm) {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const url = isEditing ? `/api/plans/${planId}` : "/api/plans";
