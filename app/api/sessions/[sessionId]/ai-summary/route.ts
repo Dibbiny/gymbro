@@ -121,12 +121,18 @@ Rules:
   }
 
   const data = await geminiRes.json();
-  const summary: string = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  console.log("[ai-summary] full Gemini response:", JSON.stringify(data, null, 2));
+
+  const candidate = data?.candidates?.[0];
+  const finishReason = candidate?.finishReason;
+  const summary: string = candidate?.content?.parts?.[0]?.text?.trim() ?? "";
+
+  console.log("[ai-summary] finishReason:", finishReason, "| summary:", summary);
 
   // Discard if it looks incomplete (no sentence-ending punctuation)
   const endsCleanly = /[.!?]$/.test(summary);
   if (!summary || !endsCleanly) {
-    console.warn("AI summary looks incomplete:", summary);
+    console.warn("[ai-summary] discarded — incomplete or empty. finishReason:", finishReason, "| text:", summary);
     return NextResponse.json({ summary: null });
   }
 
