@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ImagePlus, X } from "lucide-react";
+import { resizeImage } from "@/lib/resizeImage";
 
 interface Props {
   postId?: string;
@@ -48,8 +49,9 @@ export function AdminPostForm({ postId, initialBody = "", initialImageUrl }: Pro
       let finalImageUrl: string | null | undefined = imageUrl;
 
       if (imageFile) {
+        const compressed = await resizeImage(imageFile);
         const fd = new FormData();
-        fd.append("file", imageFile);
+        fd.append("file", compressed);
         const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
         const uploadJson = await uploadRes.json();
         if (!uploadRes.ok) { toast.error(uploadJson.error ?? "Image upload failed"); return; }

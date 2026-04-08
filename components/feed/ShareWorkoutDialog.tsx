@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Dumbbell, Trophy, Share2, ImagePlus, X, Sparkles, Loader2 } from "lucide-react";
+import { resizeImage } from "@/lib/resizeImage";
 
 interface Props {
   sessionId?: string;
@@ -62,8 +63,9 @@ export function ShareWorkoutDialog({
       let imageUrl: string | undefined;
 
       if (imageFile) {
+        const compressed = await resizeImage(imageFile);
         const fd = new FormData();
-        fd.append("file", imageFile);
+        fd.append("file", compressed);
         const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
         const uploadJson = await uploadRes.json();
         if (!uploadRes.ok) { toast.error(uploadJson.error ?? "Image upload failed"); return; }
