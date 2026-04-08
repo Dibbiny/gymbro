@@ -1,12 +1,13 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Shield, Dumbbell, Users, Megaphone, ClipboardList } from "lucide-react";
+import { Shield, Dumbbell, Users, Megaphone, ClipboardList, FileText } from "lucide-react";
 
 const adminNav = [
   { href: "/admin/exercises", label: "Exercises", icon: Dumbbell },
   { href: "/admin/plans", label: "Plans", icon: ClipboardList },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/posts", label: "Posts", icon: FileText },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
 ];
 

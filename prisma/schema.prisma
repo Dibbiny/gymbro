@@ -25,6 +25,7 @@ enum PlanVisibility {
 enum PostType {
   TRAINING_DAY
   PLAN_COMPLETION
+  ANNOUNCEMENT
 }
 
 enum FollowStatus {

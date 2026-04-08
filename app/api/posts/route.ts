@@ -8,7 +8,7 @@ const createPostSchema = z.object({
   imageUrl: z.string().url().optional(),
   sessionId: z.string().optional(),
   enrollmentId: z.string().optional(),
-  postType: z.enum(["TRAINING_DAY", "PLAN_COMPLETION"]),
+  postType: z.enum(["TRAINING_DAY", "PLAN_COMPLETION", "ANNOUNCEMENT"]),
 });
 
 // GET /api/posts — paginated feed
@@ -29,7 +29,10 @@ export async function GET(request: Request) {
 
   const posts = await db.post.findMany({
     where: {
-      authorId: { in: [session.user.id, ...followingIds] },
+      OR: [
+        { authorId: { in: [session.user.id, ...followingIds] } },
+        { postType: "ANNOUNCEMENT" },
+      ],
       ...(cursor
         ? {
             OR: [
@@ -77,6 +80,10 @@ export async function POST(request: Request) {
   const parsed = createPostSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+  }
+
+  if (parsed.data.postType === "ANNOUNCEMENT" && session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const post = await db.post.create({

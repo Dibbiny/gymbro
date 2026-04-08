@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { LikeButton } from "./LikeButton";
 import { CommentSection } from "./CommentSection";
 import { formatDistanceToNow } from "@/lib/time";
-import { Dumbbell, Trophy, Trash2 } from "lucide-react";
+import { Dumbbell, Trophy, Trash2, Megaphone } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -80,11 +80,13 @@ export function PostCard({ post, currentUserId }: { post: Post; currentUserId: s
 
         <div className="flex items-center gap-2 shrink-0">
           <Badge
-            variant={post.postType === "PLAN_COMPLETION" ? "default" : "secondary"}
+            variant={post.postType === "PLAN_COMPLETION" ? "default" : post.postType === "ANNOUNCEMENT" ? "destructive" : "secondary"}
             className="gap-1 text-xs"
           >
             {post.postType === "PLAN_COMPLETION" ? (
               <><Trophy className="h-3 w-3" /> Finished plan</>
+            ) : post.postType === "ANNOUNCEMENT" ? (
+              <><Megaphone className="h-3 w-3" /> Admin</>
             ) : (
               <><Dumbbell className="h-3 w-3" /> Workout done</>
             )}
