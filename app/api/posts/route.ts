@@ -27,23 +27,27 @@ export async function GET(request: Request) {
   });
   const followingIds = following.map((f: { followingId: string }) => f.followingId);
 
+  const cursorDate = cursor ? new Date(cursor.split("_")[0]) : null;
+  const cursorId = cursor ? cursor.split("_")[1] : null;
+
   const posts = await db.post.findMany({
     where: {
-      OR: [
-        { authorId: { in: [session.user.id, ...followingIds] } },
-        { postType: "ANNOUNCEMENT" },
+      AND: [
+        {
+          OR: [
+            { authorId: { in: [session.user.id, ...followingIds] } },
+            { postType: "ANNOUNCEMENT" },
+          ],
+        },
+        ...(cursorDate && cursorId
+          ? [{
+              OR: [
+                { createdAt: { lt: cursorDate } },
+                { createdAt: cursorDate, id: { lt: cursorId } },
+              ],
+            }]
+          : []),
       ],
-      ...(cursor
-        ? {
-            OR: [
-              { createdAt: { lt: new Date(cursor.split("_")[0]) } },
-              {
-                createdAt: new Date(cursor.split("_")[0]),
-                id: { lt: cursor.split("_")[1] },
-              },
-            ],
-          }
-        : {}),
     },
     include: {
       author: { select: { id: true, username: true, avatarUrl: true } },
