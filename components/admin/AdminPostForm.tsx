@@ -4,10 +4,8 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImagePlus, X } from "lucide-react";
-import Image from "next/image";
 
 interface Props {
   postId?: string;
@@ -103,7 +101,7 @@ export function AdminPostForm({ postId, initialBody = "", initialImageUrl }: Pro
 
       {imagePreview ? (
         <div className="relative rounded-xl overflow-hidden">
-          <Image src={imagePreview} alt="Preview" width={800} height={600} className="w-full max-h-64 object-cover" />
+          <img src={imagePreview} alt="Preview" className="w-full max-h-64 object-cover" />
           <button
             type="button"
             onClick={removeImage}
