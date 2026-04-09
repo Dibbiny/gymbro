@@ -83,10 +83,32 @@ export default async function TrainPage() {
             );
             const allTrainingDays = plan.planDays.filter((d: any) => d.planDayExercises.length > 0);
             const totalDays = allTrainingDays.length;
-            const completedDays = allTrainingDays.filter((d: any) => completedDayIds.has(d.id)).length;
-            // Show only week 1 days as the representative week
-            const trainingDays = allTrainingDays.filter((d: any) => d.weekNumber === 1);
-            const progressPct = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
+            const completedCount = allTrainingDays.filter((d: any) => completedDayIds.has(d.id)).length;
+            const progressPct = totalDays > 0 ? Math.round((completedCount / totalDays) * 100) : 0;
+
+            // For each completed day, unlock the same dayOfWeek in the next week
+            const unlockedIds = new Set<string>();
+            for (const d of allTrainingDays) {
+              if (!completedDayIds.has(d.id)) continue;
+              const successor = allTrainingDays.find(
+                (s: any) => s.weekNumber === d.weekNumber + 1 && s.dayOfWeek === d.dayOfWeek
+              );
+              if (successor && !completedDayIds.has(successor.id)) {
+                unlockedIds.add(successor.id);
+              }
+            }
+
+            // Current week = lowest week that has any incomplete day
+            const incomplete = allTrainingDays.filter((d: any) => !completedDayIds.has(d.id));
+            const currentWeek = incomplete.length > 0
+              ? Math.min(...incomplete.map((d: any) => d.weekNumber))
+              : 1;
+
+            const doneDays = allTrainingDays.filter((d: any) => completedDayIds.has(d.id));
+            const upcomingDays = allTrainingDays.filter((d: any) =>
+              !completedDayIds.has(d.id) &&
+              (d.weekNumber === currentWeek || unlockedIds.has(d.id))
+            );
 
             return (
               <Card key={enrollment.id}>
@@ -107,30 +129,40 @@ export default async function TrainPage() {
                         style={{ width: `${progressPct}%` }}
                       />
                     </div>
-                    <span>{completedDays}/{totalDays} days</span>
+                    <span>{completedCount}/{totalDays} days</span>
                   </div>
                 </CardHeader>
 
                 <CardContent className="space-y-2">
-                  {trainingDays.map((day: any) => {
-                    const done = completedDayIds.has(day.id);
+                  {/* Completed days — compact */}
+                  {doneDays.map((day: any) => (
+                    <div key={day.id} className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate text-muted-foreground">
+                          Wk {day.weekNumber} · {day.label ?? `Day ${day.dayOfWeek + 1}`}
+                        </p>
+                      </div>
+                      <span className="flex items-center gap-1 text-xs text-primary font-medium shrink-0">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Done
+                      </span>
+                    </div>
+                  ))}
+
+                  {/* Upcoming days — full detail */}
+                  {upcomingDays.map((day: any) => {
                     const activeSessionId = activeSessionByDayId.get(day.id);
                     return (
                       <div key={day.id} className={`rounded-lg border px-3 py-2.5 space-y-1.5 ${activeSessionId ? "border-primary/50 bg-primary/5" : ""}`}>
                         <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold truncate">
-                              {day.label ?? `Week ${day.weekNumber} · Day ${day.dayOfWeek + 1}`}
+                              Wk {day.weekNumber} · {day.label ?? `Day ${day.dayOfWeek + 1}`}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {day.planDayExercises.length} exercises
                             </p>
                           </div>
-                          {done ? (
-                            <span className="flex items-center gap-1 text-xs text-primary font-medium shrink-0">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Done
-                            </span>
-                          ) : activeSessionId ? (
+                          {activeSessionId ? (
                             <Link
                               href={`/train/session/${activeSessionId}`}
                               className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 h-8 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
@@ -160,6 +192,10 @@ export default async function TrainPage() {
                       </div>
                     );
                   })}
+
+                  {upcomingDays.length === 0 && doneDays.length > 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">Plan complete!</p>
+                  )}
                 </CardContent>
               </Card>
             );
