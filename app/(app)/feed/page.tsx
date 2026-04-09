@@ -4,6 +4,8 @@ import { PostCard } from "@/components/feed/PostCard";
 import { Dumbbell, Megaphone } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function FeedPage() {
   const session = await auth();
 
