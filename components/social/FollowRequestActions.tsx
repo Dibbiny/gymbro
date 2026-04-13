@@ -21,8 +21,13 @@ export function FollowRequestActions({ followerId }: { followerId: string }) {
         body: JSON.stringify({ followerId, action }),
       });
       if (!res.ok) { toast.error("Failed"); return; }
-      setState(action === "accept" ? "accepted" : "rejected");
-      router.refresh();
+      if (action === "reject") {
+        setState("rejected");
+        router.refresh();
+      } else {
+        // Don't refresh yet — keep the row visible so user can follow back
+        setState("accepted");
+      }
     } finally {
       setLoading(null);
     }
@@ -39,6 +44,7 @@ export function FollowRequestActions({ followerId }: { followerId: string }) {
       if (!res.ok) { toast.error("Failed to send request"); return; }
       toast.success("Follow request sent");
       setState("sent");
+      router.refresh();
     } finally {
       setLoading(null);
     }
