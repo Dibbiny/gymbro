@@ -150,7 +150,7 @@ export default async function HistoryPage({ searchParams }: Props) {
                 }
               } catch {}
 
-              const canRepeat = isRandomDay || isFreeTraining;
+              const canRepeat = true;
               const label = isFreeTraining
                 ? "Custom Workout"
                 : isRandomDay

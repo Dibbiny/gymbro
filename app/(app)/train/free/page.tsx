@@ -24,27 +24,52 @@ export default async function FreeTrainingPage({ searchParams }: Props) {
     const session = await auth();
     const prev = await db.trainingSession.findFirst({
       where: { id: again, userId: session!.user.id },
-      select: { notes: true },
+      include: {
+        planDay: {
+          include: {
+            planDayExercises: {
+              orderBy: { orderIndex: "asc" },
+              include: { exercise: { select: { id: true, name: true } } },
+            },
+          },
+        },
+      },
     });
-    if (prev?.notes) {
-      try {
-        const parsed = JSON.parse(prev.notes);
-        if (
-          (parsed.freeTraining === true || parsed.randomDay === true) &&
-          Array.isArray(parsed.exercises)
-        ) {
-          initialExercises = parsed.exercises.map(
-            (e: any, i: number) => ({
+
+    if (prev) {
+      if (prev.planDay) {
+        // Planned session — pull exercises from the plan day
+        initialExercises = prev.planDay.planDayExercises.map((pde: any, i: number) => ({
+          exerciseId: pde.exercise.id,
+          exerciseName: pde.exercise.name,
+          sets: pde.sets,
+          reps: pde.reps,
+          restSeconds: pde.restSeconds,
+          orderIndex: i,
+        }));
+      } else if (prev.notes) {
+        // Free / random session — pull from notes JSON
+        try {
+          const parsed = JSON.parse(prev.notes);
+          if (Array.isArray(parsed.exercises)) {
+            // Look up names from DB (exercises stored in notes may have stale names)
+            const ids = parsed.exercises.map((e: any) => e.exerciseId);
+            const rows = await db.exercise.findMany({
+              where: { id: { in: ids } },
+              select: { id: true, name: true },
+            });
+            const nameMap = new Map(rows.map((r: any) => [r.id, r.name]));
+            initialExercises = parsed.exercises.map((e: any, i: number) => ({
               exerciseId: e.exerciseId,
-              exerciseName: e.exerciseName ?? e.exerciseId,
+              exerciseName: nameMap.get(e.exerciseId) ?? e.exerciseName ?? e.exerciseId,
               sets: e.sets ?? 3,
               reps: e.reps ?? 10,
               restSeconds: e.restSeconds ?? 90,
               orderIndex: i,
-            })
-          );
-        }
-      } catch {}
+            }));
+          }
+        } catch {}
+      }
     }
   }
 
@@ -54,11 +79,15 @@ export default async function FreeTrainingPage({ searchParams }: Props) {
         <Link href="/train" className="text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-xl font-bold">Custom Workout</h1>
+        <h1 className="text-xl font-bold">
+          {initialExercises.length > 0 ? "Train again" : "Custom Workout"}
+        </h1>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Add exercises one by one and track your sets, reps, and weights in real time.
-      </p>
+      {initialExercises.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          Add exercises one by one and track your sets, reps, and weights in real time.
+        </p>
+      )}
       <FreeTrainingBuilder initialExercises={initialExercises} />
     </div>
   );

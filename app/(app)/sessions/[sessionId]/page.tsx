@@ -82,7 +82,7 @@ export default async function SessionDetailPage({ params }: Props) {
     }
   } catch {}
 
-  const canRepeat = (isRandomDay || isFreeTraining) && isOwner;
+  const canRepeat = isOwner;
   const dayLabel = isFreeTraining
     ? "Custom Workout"
     : isRandomDay
