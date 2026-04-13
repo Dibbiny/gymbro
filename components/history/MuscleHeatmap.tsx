@@ -258,7 +258,7 @@ export function MuscleHeatmap() {
         {/* Muscle grid */}
         <div className="grid grid-cols-3 gap-2">
           {MUSCLE_META.map(({ key, label }) => {
-            const data = muscles[key];
+            const data = muscles?.[key];
             const color = getColor(data);
             return (
               <div
