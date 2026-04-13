@@ -245,7 +245,8 @@ export function SessionClient({
       planDayExerciseId: `added-${ex.id}`,
       exerciseId: ex.id,
       exerciseName: ex.name,
-      categories: ex.categories.map((c) => c.name),
+      movementTypes: ex.movementTypes ?? [],
+      muscleGroups: ex.muscleGroups ?? [],
       sets: 3,
       reps: 10,
       restSeconds: 90,
@@ -285,7 +286,7 @@ export function SessionClient({
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error ?? "Failed to create exercise"); return; }
-      await handleAddExercise({ id: data.exercise.id, name: data.exercise.name, categories: [] });
+      await handleAddExercise({ id: data.exercise.id, name: data.exercise.name, movementTypes: [], muscleGroups: [] });
     } finally {
       setAddingExercise(false);
     }
@@ -406,7 +407,7 @@ export function SessionClient({
           <DialogHeader>
             <DialogTitle>{currentExercise.exerciseName}</DialogTitle>
             <Badge variant="outline" className="w-fit text-xs mt-1">
-              {currentExercise.categories.join(", ")}
+              {currentExercise.muscleGroups.join(", ")}
             </Badge>
           </DialogHeader>
           <div className="space-y-4">
@@ -522,7 +523,7 @@ export function SessionClient({
           <div>
             <h2 className="text-lg font-bold">{currentExercise.exerciseName}</h2>
             <Badge variant="secondary" className="text-xs mt-0.5">
-              {currentExercise.categories.join(", ")}
+              {currentExercise.muscleGroups.join(", ")}
             </Badge>
           </div>
           <div className="flex items-center gap-2">

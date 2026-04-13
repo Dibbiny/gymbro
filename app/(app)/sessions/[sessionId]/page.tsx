@@ -33,13 +33,13 @@ export default async function SessionDetailPage({ params }: Props) {
           plan: { select: { title: true } },
           planDayExercises: {
             orderBy: { orderIndex: "asc" },
-            include: { exercise: { select: { id: true, name: true, categories: { select: { name: true } } } } },
+            include: { exercise: { select: { id: true, name: true, muscleGroups: true } } },
           },
         },
       },
       setLogs: {
         orderBy: [{ exerciseId: "asc" }, { setNumber: "asc" }],
-        include: { exercise: { select: { id: true, name: true, categories: { select: { name: true } } } } },
+        include: { exercise: { select: { id: true, name: true, muscleGroups: true } } },
       },
     },
   });
@@ -138,7 +138,7 @@ export default async function SessionDetailPage({ params }: Props) {
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-sm">{exercise.name}</p>
                 <Badge variant="outline" className="text-xs">
-                  {exercise.categories.map((c: any) => c.name).join(", ")}
+                  {exercise.muscleGroups.join(", ")}
                 </Badge>
               </div>
               <div className="space-y-1">

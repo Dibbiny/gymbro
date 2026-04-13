@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       : focus === "LEGS"
       ? { muscleGroups: { has: "LEGS" as const } }
       : focus === "UPPER_BODY"
-      ? { muscleGroups: { hasSome: ["CHEST", "BACK", "SHOULDERS", "ARMS"] as const[] } }
+      ? { muscleGroups: { hasSome: ["CHEST", "BACK", "SHOULDERS", "ARMS"] as any } }
       : focus === "LOWER_BODY"
       ? { muscleGroups: { has: "LEGS" as const } }
       : {};

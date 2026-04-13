@@ -55,7 +55,7 @@ export function FreeTrainingBuilder({ initialExercises = [] }: Props) {
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error ?? "Failed to create exercise"); return; }
-      addExercise({ id: data.exercise.id, name: data.exercise.name, categories: [] });
+      addExercise({ id: data.exercise.id, name: data.exercise.name, movementTypes: [], muscleGroups: [] });
     } finally {
       setCreating(false);
     }
