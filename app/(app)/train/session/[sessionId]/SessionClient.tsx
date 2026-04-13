@@ -87,6 +87,22 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
     return () => reset();
   }, [sessionId]);
 
+  // Periodically persist elapsed time so the timer survives page reloads
+  // (handles the case where user navigates away without explicitly pausing)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const { elapsedSeconds: elapsed, isPaused: paused } = useTrainingSession.getState();
+      if (!paused && elapsed > 0) {
+        fetch(`/api/sessions/${sessionId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pausedDuration: elapsed }),
+        }).catch(() => {});
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [sessionId]);
+
   // Fetch overload hints once on mount
   useEffect(() => {
     fetch(`/api/sessions/${sessionId}/overload-hints`)
@@ -112,7 +128,14 @@ export function SessionClient({ sessionId, exercises, planDayLabel, isRandomDay 
   }
 
   function addSet(exerciseId: string, currentCount: number) {
-    setSetCountOverrides((prev) => new Map(prev).set(exerciseId, currentCount + 1));
+    const newCount = currentCount + 1;
+    setSetCountOverrides((prev) => new Map(prev).set(exerciseId, newCount));
+    // If the current set for this exercise is already saved (all sets done),
+    // advance the pointer to the new set so it becomes visible and active.
+    const currentSetLog = getSetLog(exerciseId, currentSet);
+    if (currentSetLog?.saved) {
+      useTrainingSession.setState({ currentSet: newCount });
+    }
   }
 
   function removeSet(ex: ExerciseEntry, currentCount: number) {
