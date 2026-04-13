@@ -107,14 +107,14 @@ export function ProgressCharts({ exercises, weeklyVolume }: Props) {
           <div className="rounded-xl border border-border p-3">
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 10 }}
                   tickFormatter={(v: string) => v.slice(5)}
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="var(--muted-foreground)"
                 />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" />
                 <Tooltip
                   contentStyle={{ fontSize: 12, borderRadius: 8 }}
                   formatter={(v) => [
@@ -125,10 +125,10 @@ export function ProgressCharts({ exercises, weeklyVolume }: Props) {
                 <Line
                   type="monotone"
                   dataKey={metric}
-                  stroke="hsl(var(--primary))"
+                  stroke="var(--primary)"
                   strokeWidth={2}
-                  dot={{ r: 3, fill: "hsl(var(--primary))" }}
-                  activeDot={{ r: 5 }}
+                  dot={{ r: 4, fill: "var(--primary)", stroke: "var(--primary)" }}
+                  activeDot={{ r: 6 }}
                   connectNulls
                 />
               </LineChart>
@@ -146,9 +146,9 @@ export function ProgressCharts({ exercises, weeklyVolume }: Props) {
           <div className="rounded-xl border border-border p-3">
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={weeklyVolume} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="week" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="week" tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" />
+                <YAxis tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 {categories.map((cat) => (
