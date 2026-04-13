@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Dumbbell, Clock } from "lucide-react";
+import { ChevronLeft, Dumbbell, Clock, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "@/lib/time";
 import { DeleteSessionButton } from "@/components/training/DeleteSessionButton";
@@ -73,11 +73,19 @@ export default async function SessionDetailPage({ params }: Props) {
   );
 
   let isRandomDay = false;
+  let isFreeTraining = false;
   try {
-    if (session.notes) isRandomDay = JSON.parse(session.notes)?.randomDay === true;
+    if (session.notes) {
+      const parsed = JSON.parse(session.notes);
+      isRandomDay = parsed?.randomDay === true;
+      isFreeTraining = parsed?.freeTraining === true;
+    }
   } catch {}
 
-  const dayLabel = isRandomDay
+  const canRepeat = (isRandomDay || isFreeTraining) && isOwner;
+  const dayLabel = isFreeTraining
+    ? "Custom Workout"
+    : isRandomDay
     ? "Random Day"
     : session.planDay?.label ?? (session.planDay ? DAY_NAMES[session.planDay.dayOfWeek] : "Workout");
 
@@ -94,6 +102,14 @@ export default async function SessionDetailPage({ params }: Props) {
             <p className="text-sm text-muted-foreground">{session.planDay.plan.title}</p>
           )}
         </div>
+        {canRepeat && (
+          <Link
+            href={`/train/free?again=${sessionId}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 h-8 text-sm font-medium hover:bg-muted transition-colors shrink-0"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Train again
+          </Link>
+        )}
         {isOwner && <DeleteSessionButton sessionId={sessionId} />}
       </div>
 

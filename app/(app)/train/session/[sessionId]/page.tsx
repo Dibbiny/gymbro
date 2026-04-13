@@ -57,12 +57,14 @@ export default async function SessionPage({ params }: Props) {
     }));
     planDayLabel = trainingSession.planDay.label;
   } else if (trainingSession.notes) {
-    // Random day — exercises embedded in notes JSON
+    // Random day or free training — exercises embedded in notes JSON
     try {
       const parsed = JSON.parse(trainingSession.notes);
-      if (parsed.randomDay && Array.isArray(parsed.exercises)) {
-        isRandomDay = true;
-        const parsedExercises: { exerciseId: string; sets: number; reps: number; restSeconds: number; orderIndex: number; }[] = parsed.exercises;
+      const isFree = parsed.freeTraining === true;
+      const isRandom = parsed.randomDay === true;
+      if ((isFree || isRandom) && Array.isArray(parsed.exercises)) {
+        isRandomDay = isRandom;
+        const parsedExercises: { exerciseId: string; exerciseName?: string; sets: number; reps: number; restSeconds: number; orderIndex: number; }[] = parsed.exercises;
         const exerciseIds = parsedExercises.map((e: any) => e.exerciseId);
         const exerciseRows = await db.exercise.findMany({
           where: { id: { in: exerciseIds } },
@@ -72,9 +74,9 @@ export default async function SessionPage({ params }: Props) {
         exercises = parsedExercises.map((e: any) => {
           const ex = exerciseMap.get(e.exerciseId) as any;
           return {
-            planDayExerciseId: `random-${e.exerciseId}`,
+            planDayExerciseId: `${isFree ? "free" : "random"}-${e.exerciseId}`,
             exerciseId: e.exerciseId,
-            exerciseName: ex?.name ?? "Unknown",
+            exerciseName: ex?.name ?? e.exerciseName ?? "Unknown",
             categories: ex?.categories?.map((c: any) => c.name) ?? [],
             description: ex?.description,
             demoUrl: ex?.demoUrl,
@@ -84,7 +86,7 @@ export default async function SessionPage({ params }: Props) {
             orderIndex: e.orderIndex,
           } as ExerciseEntry;
         });
-        planDayLabel = "Random Day";
+        planDayLabel = isFree ? "Custom Workout" : "Random Day";
       }
     } catch {}
   }

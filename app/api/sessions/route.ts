@@ -3,9 +3,19 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
+const freeExerciseSchema = z.object({
+  exerciseId: z.string(),
+  exerciseName: z.string(),
+  sets: z.number().int().min(1).max(20),
+  reps: z.number().int().min(1).max(100),
+  restSeconds: z.number().int().min(0).max(600),
+  orderIndex: z.number().int().min(0),
+});
+
 const startSchema = z.object({
   enrollmentId: z.string().optional(),
   planDayId: z.string().optional(),
+  freeExercises: z.array(freeExerciseSchema).min(1).optional(),
 });
 
 // POST /api/sessions — start a new training session
@@ -38,6 +48,9 @@ export async function POST(request: Request) {
       userId: session.user.id,
       enrollmentId: parsed.data.enrollmentId ?? null,
       planDayId: parsed.data.planDayId ?? null,
+      ...(parsed.data.freeExercises
+        ? { notes: JSON.stringify({ freeTraining: true, exercises: parsed.data.freeExercises }) }
+        : {}),
     },
   });
 

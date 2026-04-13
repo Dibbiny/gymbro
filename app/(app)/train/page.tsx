@@ -5,7 +5,7 @@ import { StartSessionButton } from "@/components/training/StartSessionButton";
 import { UnenrollButton } from "@/components/training/UnenrollButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Dumbbell, Play, Shuffle } from "lucide-react";
+import { CheckCircle2, Dumbbell, Play, Plus, Shuffle } from "lucide-react";
 
 export default async function TrainPage() {
   const session = await auth();
@@ -43,12 +43,20 @@ export default async function TrainPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Train</h1>
-        <Link
-          href="/train/random"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 h-8 text-sm font-medium hover:bg-muted transition-colors"
-        >
-          <Shuffle className="h-3.5 w-3.5" /> Random
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/train/free"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 h-8 text-sm font-medium hover:bg-muted transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" /> Custom
+          </Link>
+          <Link
+            href="/train/random"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 h-8 text-sm font-medium hover:bg-muted transition-colors"
+          >
+            <Shuffle className="h-3.5 w-3.5" /> Random
+          </Link>
+        </div>
       </div>
 
       {enrollments.length === 0 ? (

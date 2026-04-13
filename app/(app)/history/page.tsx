@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "@/lib/time";
-import { Calendar, Dumbbell, Clock, Trophy, Shuffle, Download } from "lucide-react";
+import { Calendar, Dumbbell, Clock, Trophy, Shuffle, Download, RotateCcw } from "lucide-react";
 import { ProgressCharts } from "@/components/history/ProgressCharts";
 import Link from "next/link";
 
@@ -141,50 +141,65 @@ export default async function HistoryPage({ searchParams }: Props) {
                 : 0;
 
               let isRandomDay = false;
+              let isFreeTraining = false;
               try {
                 if (s.notes) {
                   const parsed = JSON.parse(s.notes);
                   isRandomDay = parsed.randomDay === true;
+                  isFreeTraining = parsed.freeTraining === true;
                 }
               } catch {}
 
+              const canRepeat = isRandomDay || isFreeTraining;
+              const label = isFreeTraining
+                ? "Custom Workout"
+                : isRandomDay
+                ? "Random Day"
+                : s.planDay?.label ?? (s.planDay ? DAY_NAMES[s.planDay.dayOfWeek] : "Workout");
+
               return (
-                <Link key={s.id} href={`/sessions/${s.id}`} className="block rounded-xl border p-3.5 space-y-2 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      {isRandomDay ? (
-                        <Shuffle className="h-4 w-4 text-muted-foreground shrink-0" />
-                      ) : (
-                        <Dumbbell className="h-4 w-4 text-muted-foreground shrink-0" />
-                      )}
-                      <div>
-                        <p className="text-sm font-semibold">
-                          {isRandomDay
-                            ? "Random Day"
-                            : s.planDay?.label ?? (s.planDay ? DAY_NAMES[s.planDay.dayOfWeek] : "Workout")}
-                        </p>
-                        {s.planDay?.plan && (
-                          <p className="text-xs text-muted-foreground">{s.planDay.plan.title}</p>
+                <div key={s.id} className="rounded-xl border p-3.5 space-y-2">
+                  <Link href={`/sessions/${s.id}`} className="block space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {isRandomDay ? (
+                          <Shuffle className="h-4 w-4 text-muted-foreground shrink-0" />
+                        ) : (
+                          <Dumbbell className="h-4 w-4 text-muted-foreground shrink-0" />
                         )}
+                        <div>
+                          <p className="text-sm font-semibold">{label}</p>
+                          {s.planDay?.plan && (
+                            <p className="text-xs text-muted-foreground">{s.planDay.plan.title}</p>
+                          )}
+                        </div>
                       </div>
+                      <Badge variant="secondary" className="text-xs shrink-0">
+                        {s._count.setLogs} sets
+                      </Badge>
                     </div>
-                    <Badge variant="secondary" className="text-xs shrink-0">
-                      {s._count.setLogs} sets
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {formatDistanceToNow(new Date(s.completedAt!))}
-                    </span>
-                    {duration > 60 && (
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatDuration(duration)}
+                        <Calendar className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(s.completedAt!))}
                       </span>
-                    )}
-                  </div>
-                </Link>
+                      {duration > 60 && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDuration(duration)}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                  {canRepeat && (
+                    <Link
+                      href={`/train/free?again=${s.id}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                    >
+                      <RotateCcw className="h-3 w-3" /> Train again
+                    </Link>
+                  )}
+                </div>
               );
             })
           )}
