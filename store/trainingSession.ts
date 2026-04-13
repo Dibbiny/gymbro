@@ -33,6 +33,7 @@ export interface PreloadedSetLog {
 interface TrainingSessionState {
   sessionId: string | null;
   exercises: ExerciseEntry[];
+  skippedExerciseIds: string[];
   currentExerciseIndex: number;
   currentSet: number; // 1-based, which set of the current exercise
   setLogs: SetLogEntry[];
@@ -57,12 +58,16 @@ interface TrainingSessionState {
   logSet: (entry: SetLogEntry) => void;
   markSetSaved: (exerciseId: string, setNumber: number) => void;
   advanceSet: () => void; // move to next set or next exercise
+  addExerciseEntry: (exercise: ExerciseEntry) => void;
+  skipExercise: (exerciseId: string) => void;
+  unskipExercise: (exerciseId: string) => void;
   reset: () => void;
 }
 
 export const useTrainingSession = create<TrainingSessionState>((set, get) => ({
   sessionId: null,
   exercises: [],
+  skippedExerciseIds: [],
   currentExerciseIndex: 0,
   currentSet: 1,
   setLogs: [],
@@ -75,6 +80,7 @@ export const useTrainingSession = create<TrainingSessionState>((set, get) => ({
     set({
       sessionId,
       exercises,
+      skippedExerciseIds: [],
       currentExerciseIndex: 0,
       currentSet: 1,
       setLogs: [],
@@ -104,6 +110,7 @@ export const useTrainingSession = create<TrainingSessionState>((set, get) => ({
     set({
       sessionId,
       exercises,
+      skippedExerciseIds: [],
       currentExerciseIndex,
       currentSet,
       setLogs,
@@ -161,10 +168,28 @@ export const useTrainingSession = create<TrainingSessionState>((set, get) => ({
     // if last set of last exercise, stay — user finishes manually
   },
 
+  addExerciseEntry: (exercise) =>
+    set((state) => ({
+      exercises: [...state.exercises, { ...exercise, orderIndex: state.exercises.length }],
+    })),
+
+  skipExercise: (exerciseId) =>
+    set((state) => ({
+      skippedExerciseIds: state.skippedExerciseIds.includes(exerciseId)
+        ? state.skippedExerciseIds
+        : [...state.skippedExerciseIds, exerciseId],
+    })),
+
+  unskipExercise: (exerciseId) =>
+    set((state) => ({
+      skippedExerciseIds: state.skippedExerciseIds.filter((id) => id !== exerciseId),
+    })),
+
   reset: () =>
     set({
       sessionId: null,
       exercises: [],
+      skippedExerciseIds: [],
       currentExerciseIndex: 0,
       currentSet: 1,
       setLogs: [],

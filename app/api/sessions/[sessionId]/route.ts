@@ -6,7 +6,7 @@ import { awardXP } from "@/lib/xp";
 
 const updateSchema = z.object({
   pausedDuration: z.number().int().min(0).optional(),
-  notes: z.string().max(1000).optional(),
+  notes: z.string().max(20000).optional(),
 });
 
 // GET /api/sessions/[sessionId]

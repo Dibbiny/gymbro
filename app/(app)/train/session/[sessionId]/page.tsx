@@ -41,6 +41,7 @@ export default async function SessionPage({ params }: Props) {
   let isRandomDay = false;
   const preloadedLogs: PreloadedSetLog[] = trainingSession.setLogs;
   const pausedDuration = trainingSession.pausedDuration;
+  const sessionNotes = trainingSession.notes;
 
   if (trainingSession.planDay) {
     exercises = trainingSession.planDay.planDayExercises.map((pde: any) => ({
@@ -91,6 +92,43 @@ export default async function SessionPage({ params }: Props) {
     } catch {}
   }
 
+  // Merge any exercises added mid-session (stored as extraExercises in notes)
+  try {
+    if (trainingSession.notes) {
+      const parsed = JSON.parse(trainingSession.notes);
+      if (Array.isArray(parsed.extraExercises) && parsed.extraExercises.length > 0) {
+        const extraIds = parsed.extraExercises.map((e: any) => e.exerciseId);
+        const existingIds = new Set(exercises.map((e) => e.exerciseId));
+        const newIds = extraIds.filter((id: string) => !existingIds.has(id));
+        if (newIds.length > 0) {
+          const extraRows = await db.exercise.findMany({
+            where: { id: { in: newIds } },
+            select: { id: true, name: true, categories: { select: { name: true } }, description: true, demoUrl: true },
+          });
+          const extraMap = new Map(extraRows.map((r: any) => [r.id, r]));
+          const extraEntries: ExerciseEntry[] = parsed.extraExercises
+            .filter((e: any) => !existingIds.has(e.exerciseId))
+            .map((e: any, idx: number) => {
+              const row = extraMap.get(e.exerciseId) as any;
+              return {
+                planDayExerciseId: `extra-${e.exerciseId}`,
+                exerciseId: e.exerciseId,
+                exerciseName: row?.name ?? e.exerciseName ?? "Unknown",
+                categories: row?.categories?.map((c: any) => c.name) ?? [],
+                description: row?.description,
+                demoUrl: row?.demoUrl,
+                sets: e.sets ?? 3,
+                reps: e.reps ?? 10,
+                restSeconds: e.restSeconds ?? 90,
+                orderIndex: exercises.length + idx,
+              };
+            });
+          exercises = [...exercises, ...extraEntries];
+        }
+      }
+    }
+  } catch {}
+
   return (
     <SessionClient
       sessionId={sessionId}
@@ -99,6 +137,7 @@ export default async function SessionPage({ params }: Props) {
       isRandomDay={isRandomDay}
       preloadedLogs={preloadedLogs}
       pausedDuration={pausedDuration}
+      sessionNotes={sessionNotes}
     />
   );
 }
