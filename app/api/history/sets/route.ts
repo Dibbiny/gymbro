@@ -19,20 +19,28 @@ export async function GET(request: Request) {
     select: {
       weightKg: true,
       repsCompleted: true,
-      session: { select: { completedAt: true } },
+      session: { select: { id: true, completedAt: true } },
     },
     orderBy: { session: { completedAt: "asc" } },
   });
 
-  const byDate: Record<string, { maxWeight: number; volume: number }> = {};
+  // One data point per session (not per date), so two sessions on the
+  // same day both appear and the line connects them correctly.
+  const bySession: Record<string, { date: string; maxWeight: number; volume: number }> = {};
   for (const s of sets) {
+    const id = s.session.id;
     const weight = s.weightKg ?? 0;
-    const date = s.session.completedAt!.toISOString().slice(0, 10);
-    if (!byDate[date]) byDate[date] = { maxWeight: 0, volume: 0 };
-    byDate[date].maxWeight = Math.max(byDate[date].maxWeight, weight);
-    byDate[date].volume += weight * s.repsCompleted;
+    if (!bySession[id]) {
+      bySession[id] = {
+        date: s.session.completedAt!.toISOString().slice(0, 10),
+        maxWeight: 0,
+        volume: 0,
+      };
+    }
+    bySession[id].maxWeight = Math.max(bySession[id].maxWeight, weight);
+    bySession[id].volume += weight * s.repsCompleted;
   }
 
-  const data = Object.entries(byDate).map(([date, v]) => ({ date, ...v }));
+  const data = Object.values(bySession);
   return NextResponse.json({ data });
 }

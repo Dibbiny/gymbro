@@ -97,6 +97,12 @@ export function ProgressCharts({ exercises, weeklyVolume }: Props) {
           <p className="text-sm text-muted-foreground text-center py-6">No data for this exercise yet</p>
         )}
 
+        {!loading && data.length === 1 && (
+          <p className="text-xs text-muted-foreground text-center pb-1">
+            Train this exercise in more sessions to see your progress trend
+          </p>
+        )}
+
         {!loading && data.length > 0 && (
           <div className="rounded-xl border border-border p-3">
             <ResponsiveContainer width="100%" height={200}>
@@ -121,8 +127,9 @@ export function ProgressCharts({ exercises, weeklyVolume }: Props) {
                   dataKey={metric}
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
-                  dot={{ r: 3 }}
+                  dot={{ r: 3, fill: "hsl(var(--primary))" }}
                   activeDot={{ r: 5 }}
+                  connectNulls
                 />
               </LineChart>
             </ResponsiveContainer>
