@@ -28,14 +28,13 @@ interface Props {
   weeklyVolume: WeeklyVolume[];
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
+const MUSCLE_GROUP_COLORS: Record<string, string> = {
   CHEST: "#ef4444",
   BACK: "#3b82f6",
   LEGS: "#22c55e",
   SHOULDERS: "#f59e0b",
   ARMS: "#a855f7",
   CORE: "#ec4899",
-  CARDIO: "#14b8a6",
   OTHER: "#94a3b8",
 };
 
@@ -152,7 +151,7 @@ export function ProgressCharts({ exercises, weeklyVolume }: Props) {
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 {categories.map((cat) => (
-                  <Bar key={cat} dataKey={cat} stackId="a" fill={CATEGORY_COLORS[cat] ?? "#94a3b8"} />
+                  <Bar key={cat} dataKey={cat} stackId="a" fill={MUSCLE_GROUP_COLORS[cat] ?? "#94a3b8"} />
                 ))}
               </BarChart>
             </ResponsiveContainer>

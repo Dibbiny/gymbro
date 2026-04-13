@@ -7,7 +7,8 @@ import { Search, Plus, Loader2, ChevronDown, ChevronRight } from "lucide-react";
 export interface PickableExercise {
   id: string;
   name: string;
-  categories: { id: string; name: string }[];
+  movementTypes: string[];
+  muscleGroups: string[];
 }
 
 interface Props {
@@ -24,7 +25,7 @@ export function ExercisePicker({ addedIds, onAdd, onQuickCreate, creating }: Pro
   const [searching, setSearching] = useState(false);
   const [allExercises, setAllExercises] = useState<PickableExercise[]>([]);
   const [loadingAll, setLoadingAll] = useState(false);
-  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load all exercises when switching to browse tab
@@ -61,18 +62,14 @@ export function ExercisePicker({ addedIds, onAdd, onQuickCreate, creating }: Pro
     };
   }, [query]);
 
-  // Group all exercises by category for browse tab
-  const byCategory = new Map<string, PickableExercise[]>();
+  // Group all exercises by first muscle group for browse tab
+  const byMuscle = new Map<string, PickableExercise[]>();
   for (const ex of allExercises) {
-    const cats = ex.categories.length > 0 ? ex.categories : [{ id: "other", name: "Other" }];
-    for (const cat of cats) {
-      if (!byCategory.has(cat.name)) byCategory.set(cat.name, []);
-      if (!byCategory.get(cat.name)!.some((e) => e.id === ex.id)) {
-        byCategory.get(cat.name)!.push(ex);
-      }
-    }
+    const group = ex.muscleGroups[0] ?? "Other";
+    if (!byMuscle.has(group)) byMuscle.set(group, []);
+    byMuscle.get(group)!.push(ex);
   }
-  const categories = Array.from(byCategory.entries()).sort(([a], [b]) => a.localeCompare(b));
+  const muscleGroups = Array.from(byMuscle.entries()).sort(([a], [b]) => a.localeCompare(b));
 
   const exactMatch = searchResults.some(
     (r) => r.name.toLowerCase() === query.trim().toLowerCase()
@@ -89,9 +86,9 @@ export function ExercisePicker({ addedIds, onAdd, onQuickCreate, creating }: Pro
       >
         <div className="min-w-0">
           <p className="text-sm font-medium truncate">{ex.name}</p>
-          {ex.categories.length > 0 && (
+          {ex.muscleGroups.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              {ex.categories.map((c) => c.name).join(", ")}
+              {ex.muscleGroups.join(", ")}
             </p>
           )}
         </div>
@@ -119,7 +116,7 @@ export function ExercisePicker({ addedIds, onAdd, onQuickCreate, creating }: Pro
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t === "search" ? "Search" : "Browse by category"}
+            {t === "search" ? "Search" : "Browse by muscle"}
           </button>
         ))}
       </div>
@@ -164,7 +161,7 @@ export function ExercisePicker({ addedIds, onAdd, onQuickCreate, creating }: Pro
 
           {!query.trim() && (
             <p className="text-xs text-muted-foreground text-center py-4">
-              Type to search, or switch to Browse to explore by category
+              Type to search, or switch to Browse to explore by muscle group
             </p>
           )}
         </div>
@@ -179,18 +176,18 @@ export function ExercisePicker({ addedIds, onAdd, onQuickCreate, creating }: Pro
             </div>
           )}
           {!loadingAll &&
-            categories.map(([catName, exs]) => {
-              const isOpen = openCategories[catName] ?? false;
+            muscleGroups.map(([groupName, exs]) => {
+              const isOpen = openSections[groupName] ?? false;
               return (
-                <div key={catName} className="rounded-xl border overflow-hidden">
+                <div key={groupName} className="rounded-xl border overflow-hidden">
                   <button
                     type="button"
                     onClick={() =>
-                      setOpenCategories((prev) => ({ ...prev, [catName]: !isOpen }))
+                      setOpenSections((prev) => ({ ...prev, [groupName]: !isOpen }))
                     }
                     className="w-full flex items-center justify-between px-3 py-2.5 font-medium text-sm hover:bg-muted transition-colors"
                   >
-                    <span>{catName}</span>
+                    <span>{groupName}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{exs.length}</span>
                       {isOpen ? (

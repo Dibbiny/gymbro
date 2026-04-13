@@ -7,7 +7,8 @@ const createExerciseSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
   demoUrl: z.string().url().max(500).optional(),
-  categoryIds: z.array(z.string().min(1)).optional(),
+  movementTypes: z.array(z.enum(["PULL", "PUSH", "CORE"])).optional(),
+  muscleGroups: z.array(z.enum(["LEGS", "BACK", "ARMS", "CHEST", "SHOULDERS", "CORE"])).optional(),
   quickAdd: z.boolean().optional(),
   autoApprove: z.boolean().optional(),
 });
@@ -33,7 +34,8 @@ export async function GET(request: Request) {
     select: {
       id: true,
       name: true,
-      categories: { select: { id: true, name: true } },
+      movementTypes: true,
+      muscleGroups: true,
       description: true,
       demoUrl: true,
       status: true,
@@ -55,10 +57,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const { autoApprove, quickAdd, categoryIds, ...data } = parsed.data;
+  const { autoApprove, quickAdd, movementTypes, muscleGroups, ...data } = parsed.data;
 
-  if (!quickAdd && (!categoryIds || categoryIds.length === 0)) {
-    return NextResponse.json({ error: "Select at least one category" }, { status: 400 });
+  if (!quickAdd) {
+    if (!movementTypes || movementTypes.length === 0) {
+      return NextResponse.json({ error: "Select at least one movement type" }, { status: 400 });
+    }
+    if (!muscleGroups || muscleGroups.length === 0) {
+      return NextResponse.json({ error: "Select at least one muscle group" }, { status: 400 });
+    }
   }
 
   // Only admins can auto-approve
@@ -73,7 +80,8 @@ export async function POST(request: Request) {
       submittedById: session.user.id,
       approvedById: status === "APPROVED" ? session.user.id : null,
       status,
-      ...(categoryIds?.length ? { categories: { connect: categoryIds.map((id) => ({ id })) } } : {}),
+      movementTypes: movementTypes ?? [],
+      muscleGroups: muscleGroups ?? [],
     },
   });
 

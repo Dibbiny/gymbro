@@ -10,7 +10,6 @@ const RECOVERY_HOURS: Record<string, number> = {
   SHOULDERS: 48,
   ARMS: 36,
   CORE: 24,
-  CARDIO: 24,
   OTHER: 48,
 };
 
@@ -31,7 +30,7 @@ export async function GET() {
     },
     include: {
       exercise: {
-        include: { categories: { select: { name: true } } },
+        select: { muscleGroups: true },
       },
       session: {
         select: { completedAt: true },
@@ -40,15 +39,14 @@ export async function GET() {
     orderBy: { loggedAt: "desc" },
   });
 
-  // Track most recent session completedAt per category
+  // Track most recent session completedAt per muscle group
   const lastTrainedByCategory: Record<string, Date> = {};
 
   for (const log of setLogs) {
     const completedAt = log.session.completedAt;
     if (!completedAt) continue;
 
-    for (const category of log.exercise.categories) {
-      const key = category.name.toUpperCase();
+    for (const key of log.exercise.muscleGroups) {
       const existing = lastTrainedByCategory[key];
       if (!existing || completedAt > existing) {
         lastTrainedByCategory[key] = completedAt;

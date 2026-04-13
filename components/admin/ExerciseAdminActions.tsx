@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
@@ -26,17 +26,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-interface Category {
-  id: string;
-  name: string;
-}
+const MOVEMENT_TYPES = ["PULL", "PUSH", "CORE"] as const;
+const MUSCLE_GROUPS = ["CHEST", "BACK", "SHOULDERS", "ARMS", "LEGS", "CORE"] as const;
 
 interface Exercise {
   id: string;
   name: string;
   description: string | null;
   demoUrl: string | null;
-  categories: { id: string; name: string }[];
+  movementTypes: string[];
+  muscleGroups: string[];
 }
 
 interface Props {
@@ -48,26 +47,26 @@ export function ExerciseAdminActions({ exercise }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
 
   const [name, setName] = useState(exercise.name);
   const [description, setDescription] = useState(exercise.description ?? "");
   const [demoUrl, setDemoUrl] = useState(exercise.demoUrl ?? "");
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
-    exercise.categories.map((c) => c.id)
+  const [selectedMovementTypes, setSelectedMovementTypes] = useState<string[]>(
+    exercise.movementTypes
+  );
+  const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<string[]>(
+    exercise.muscleGroups
   );
 
-  useEffect(() => {
-    if (editOpen) {
-      fetch("/api/categories")
-        .then((r) => r.json())
-        .then((d) => setAvailableCategories(d.categories ?? []));
-    }
-  }, [editOpen]);
+  function toggleMovementType(type: string) {
+    setSelectedMovementTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  }
 
-  function toggleCategory(id: string) {
-    setSelectedCategoryIds((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+  function toggleMuscleGroup(group: string) {
+    setSelectedMuscleGroups((prev) =>
+      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group]
     );
   }
 
@@ -77,7 +76,7 @@ export function ExerciseAdminActions({ exercise }: Props) {
       const res = await fetch(`/api/admin/exercises/${exercise.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, demoUrl, categoryIds: selectedCategoryIds }),
+        body: JSON.stringify({ name, description, demoUrl, movementTypes: selectedMovementTypes, muscleGroups: selectedMuscleGroups }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error ?? "Failed to save"); return; }
@@ -168,27 +167,52 @@ export function ExerciseAdminActions({ exercise }: Props) {
             </div>
 
             <div className="space-y-2">
-              <Label>Categories</Label>
+              <Label>Movement Type</Label>
               <div className="flex flex-wrap gap-2">
-                {availableCategories.map((cat) => (
+                {MOVEMENT_TYPES.map((type) => (
                   <button
-                    key={cat.id}
+                    key={type}
                     type="button"
-                    onClick={() => toggleCategory(cat.id)}
+                    onClick={() => toggleMovementType(type)}
                     className={cn(
                       "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                      selectedCategoryIds.includes(cat.id)
+                      selectedMovementTypes.includes(type)
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
                     )}
                   >
-                    {cat.name}
+                    {type}
                   </button>
                 ))}
               </div>
             </div>
 
-            <Button className="w-full" onClick={handleSave} disabled={saving || !name.trim() || selectedCategoryIds.length === 0}>
+            <div className="space-y-2">
+              <Label>Muscle Group</Label>
+              <div className="flex flex-wrap gap-2">
+                {MUSCLE_GROUPS.map((group) => (
+                  <button
+                    key={group}
+                    type="button"
+                    onClick={() => toggleMuscleGroup(group)}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                      selectedMuscleGroups.includes(group)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {group}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={handleSave}
+              disabled={saving || !name.trim() || selectedMovementTypes.length === 0 || selectedMuscleGroups.length === 0}
+            >
               {saving ? "Saving..." : "Save changes"}
             </Button>
           </div>

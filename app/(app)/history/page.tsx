@@ -67,7 +67,7 @@ export default async function HistoryPage({ searchParams }: Props) {
       select: {
         weightKg: true,
         repsCompleted: true,
-        exercise: { select: { categories: { select: { name: true } } } },
+        exercise: { select: { muscleGroups: true } },
         session: { select: { completedAt: true } },
       },
     });
@@ -79,7 +79,7 @@ export default async function HistoryPage({ searchParams }: Props) {
       monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
       const week = monday.toISOString().slice(0, 10);
       if (!byWeek[week]) byWeek[week] = {};
-      const cat = s.exercise.categories[0]?.name ?? "Other";
+      const cat = s.exercise.muscleGroups[0] ?? "OTHER";
       byWeek[week][cat] = (byWeek[week][cat] ?? 0) + (s.weightKg ?? 0) * s.repsCompleted;
     }
 

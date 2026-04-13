@@ -4,7 +4,8 @@ export interface ExerciseEntry {
   planDayExerciseId: string;
   exerciseId: string;
   exerciseName: string;
-  categories: string[];
+  movementTypes: string[];
+  muscleGroups: string[];
   sets: number;
   reps: number;
   restSeconds: number;

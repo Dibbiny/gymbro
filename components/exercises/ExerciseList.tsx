@@ -15,7 +15,8 @@ import { cn } from "@/lib/utils";
 interface Exercise {
   id: string;
   name: string;
-  categories: { id: string; name: string }[];
+  movementTypes: string[];
+  muscleGroups: string[];
   description: string | null;
   demoUrl: string | null;
   status: string;
@@ -41,30 +42,28 @@ function extractYouTubeId(url: string): string | null {
 
 export function ExerciseList({ exercises, pendingExercises }: Props) {
   const [search, setSearch] = useState("");
-  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
+  const [muscleGroupFilters, setMuscleGroupFilters] = useState<string[]>([]);
   const [selected, setSelected] = useState<Exercise | null>(null);
 
-  // Derive unique categories from exercises
-  const allCategories = useMemo(() => {
-    const map = new Map<string, string>();
+  // Derive unique muscle groups from exercises
+  const allMuscleGroups = useMemo(() => {
+    const set = new Set<string>();
     for (const ex of exercises) {
-      for (const cat of ex.categories) {
-        map.set(cat.id, cat.name);
+      for (const mg of ex.muscleGroups) {
+        set.add(mg);
       }
     }
-    return Array.from(map.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(set).sort();
   }, [exercises]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return exercises.filter((ex) => {
       const matchesSearch = !q || ex.name.toLowerCase().includes(q) || ex.description?.toLowerCase().includes(q);
-      const matchesCategory = categoryFilters.length === 0 || categoryFilters.every((id) => ex.categories.some((c) => c.id === id));
-      return matchesSearch && matchesCategory;
+      const matchesMuscleGroup = muscleGroupFilters.length === 0 || muscleGroupFilters.some((mg) => ex.muscleGroups.includes(mg));
+      return matchesSearch && matchesMuscleGroup;
     });
-  }, [exercises, search, categoryFilters]);
+  }, [exercises, search, muscleGroupFilters]);
 
   const youtubeId = selected?.demoUrl ? extractYouTubeId(selected.demoUrl) : null;
 
@@ -92,28 +91,28 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
 
         <div className="flex gap-1.5 flex-wrap">
           <button
-            onClick={() => setCategoryFilters([])}
+            onClick={() => setMuscleGroupFilters([])}
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              categoryFilters.length === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+              muscleGroupFilters.length === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
             )}
           >
             All
           </button>
-          {allCategories.map((cat) => (
+          {allMuscleGroups.map((mg) => (
             <button
-              key={cat.id}
+              key={mg}
               onClick={() =>
-                setCategoryFilters((prev) =>
-                  prev.includes(cat.id) ? prev.filter((id) => id !== cat.id) : [...prev, cat.id]
+                setMuscleGroupFilters((prev) =>
+                  prev.includes(mg) ? prev.filter((g) => g !== mg) : [...prev, mg]
                 )
               }
               className={cn(
                 "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                categoryFilters.includes(cat.id) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                muscleGroupFilters.includes(mg) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
-              {cat.name}
+              {mg}
             </button>
           ))}
         </div>
@@ -129,7 +128,7 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
             <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2 opacity-60">
               <div>
                 <p className="text-sm font-medium">{ex.name}</p>
-                <p className="text-xs text-muted-foreground">{ex.categories.map((c) => c.name).join(", ")}</p>
+                <p className="text-xs text-muted-foreground">{ex.muscleGroups.join(", ")}</p>
               </div>
               <Badge variant="secondary" className="text-xs">Pending</Badge>
             </div>
@@ -151,7 +150,7 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
             >
               <p className="text-sm font-medium">{ex.name}</p>
               <Badge variant="outline" className="text-xs shrink-0">
-                {ex.categories.map((c) => c.name).join(", ")}
+                {ex.muscleGroups.join(", ")}
               </Badge>
             </button>
           ))
@@ -166,7 +165,7 @@ export function ExerciseList({ exercises, pendingExercises }: Props) {
               <DialogHeader>
                 <DialogTitle>{selected.name}</DialogTitle>
                 <Badge variant="outline" className="w-fit text-xs mt-1">
-                  {selected.categories.map((c) => c.name).join(", ")}
+                  {selected.muscleGroups.join(", ")}
                 </Badge>
               </DialogHeader>
 

@@ -11,7 +11,8 @@ const editSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
   demoUrl: z.string().url().max(500).optional().or(z.literal("")),
-  categoryIds: z.array(z.string()).min(1),
+  movementTypes: z.array(z.enum(["PULL", "PUSH", "CORE"])).min(1),
+  muscleGroups: z.array(z.enum(["LEGS", "BACK", "ARMS", "CHEST", "SHOULDERS", "CORE"])).min(1),
 });
 
 // PATCH — approve / reject
@@ -63,9 +64,8 @@ export async function PUT(
       name: parsed.data.name,
       description: parsed.data.description ?? null,
       demoUrl: parsed.data.demoUrl || null,
-      categories: {
-        set: parsed.data.categoryIds.map((id) => ({ id })),
-      },
+      movementTypes: parsed.data.movementTypes,
+      muscleGroups: parsed.data.muscleGroups,
     },
   });
 

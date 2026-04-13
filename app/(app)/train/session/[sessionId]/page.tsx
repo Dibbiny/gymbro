@@ -20,7 +20,7 @@ export default async function SessionPage({ params }: Props) {
           planDayExercises: {
             orderBy: { orderIndex: "asc" },
             include: {
-              exercise: { select: { id: true, name: true, categories: { select: { name: true } }, description: true, demoUrl: true } },
+              exercise: { select: { id: true, name: true, movementTypes: true, muscleGroups: true, description: true, demoUrl: true } },
             },
           },
         },
@@ -48,7 +48,8 @@ export default async function SessionPage({ params }: Props) {
       planDayExerciseId: pde.id,
       exerciseId: pde.exercise.id,
       exerciseName: pde.exercise.name,
-      categories: pde.exercise.categories.map((c: any) => c.name),
+      movementTypes: pde.exercise.movementTypes,
+      muscleGroups: pde.exercise.muscleGroups,
       description: pde.exercise.description,
       demoUrl: pde.exercise.demoUrl,
       sets: pde.sets,
@@ -69,7 +70,7 @@ export default async function SessionPage({ params }: Props) {
         const exerciseIds = parsedExercises.map((e: any) => e.exerciseId);
         const exerciseRows = await db.exercise.findMany({
           where: { id: { in: exerciseIds } },
-          select: { id: true, name: true, categories: { select: { name: true } }, description: true, demoUrl: true },
+          select: { id: true, name: true, movementTypes: true, muscleGroups: true, description: true, demoUrl: true },
         });
         const exerciseMap = new Map(exerciseRows.map((ex: any) => [ex.id, ex]));
         exercises = parsedExercises.map((e: any) => {
@@ -78,7 +79,8 @@ export default async function SessionPage({ params }: Props) {
             planDayExerciseId: `${isFree ? "free" : "random"}-${e.exerciseId}`,
             exerciseId: e.exerciseId,
             exerciseName: ex?.name ?? e.exerciseName ?? "Unknown",
-            categories: ex?.categories?.map((c: any) => c.name) ?? [],
+            movementTypes: ex?.movementTypes ?? [],
+            muscleGroups: ex?.muscleGroups ?? [],
             description: ex?.description,
             demoUrl: ex?.demoUrl,
             sets: e.sets,
@@ -103,7 +105,7 @@ export default async function SessionPage({ params }: Props) {
         if (newIds.length > 0) {
           const extraRows = await db.exercise.findMany({
             where: { id: { in: newIds } },
-            select: { id: true, name: true, categories: { select: { name: true } }, description: true, demoUrl: true },
+            select: { id: true, name: true, movementTypes: true, muscleGroups: true, description: true, demoUrl: true },
           });
           const extraMap = new Map(extraRows.map((r: any) => [r.id, r]));
           const extraEntries: ExerciseEntry[] = parsed.extraExercises
@@ -114,7 +116,8 @@ export default async function SessionPage({ params }: Props) {
                 planDayExerciseId: `extra-${e.exerciseId}`,
                 exerciseId: e.exerciseId,
                 exerciseName: row?.name ?? e.exerciseName ?? "Unknown",
-                categories: row?.categories?.map((c: any) => c.name) ?? [],
+                movementTypes: row?.movementTypes ?? [],
+                muscleGroups: row?.muscleGroups ?? [],
                 description: row?.description,
                 demoUrl: row?.demoUrl,
                 sets: e.sets ?? 3,

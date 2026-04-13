@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,16 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-interface Category {
-  id: string;
-  name: string;
-}
+const MOVEMENT_TYPES = ["PULL", "PUSH", "CORE"] as const;
+const MUSCLE_GROUPS = ["CHEST", "BACK", "SHOULDERS", "ARMS", "LEGS", "CORE"] as const;
 
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
   demoUrl: z.string().url("Must be a valid URL").max(500).optional().or(z.literal("")),
-  categoryIds: z.array(z.string()).min(1, "Select at least one category"),
+  movementTypes: z.array(z.enum(["PULL", "PUSH", "CORE"])).min(1, "Select at least one movement type"),
+  muscleGroups: z.array(z.enum(["LEGS", "BACK", "ARMS", "CHEST", "SHOULDERS", "CORE"])).min(1, "Select at least one muscle group"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -34,8 +33,8 @@ interface Props {
 
 export function ExerciseSubmitForm({ autoApprove, onSuccess, redirectOnSuccess }: Props) {
   const router = useRouter();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [selectedMovementTypes, setSelectedMovementTypes] = useState<string[]>([]);
+  const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<string[]>([]);
 
   const {
     register,
@@ -45,16 +44,18 @@ export function ExerciseSubmitForm({ autoApprove, onSuccess, redirectOnSuccess }
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  useEffect(() => {
-    fetch("/api/categories")
-      .then((r) => r.json())
-      .then((d) => setCategories(d.categories ?? []));
-  }, []);
+  function toggleMovementType(type: string) {
+    setSelectedMovementTypes((prev) => {
+      const next = prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type];
+      setValue("movementTypes", next as any);
+      return next;
+    });
+  }
 
-  function toggleCategory(id: string) {
-    setSelectedCategoryIds((prev) => {
-      const next = prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id];
-      setValue("categoryIds", next);
+  function toggleMuscleGroup(group: string) {
+    setSelectedMuscleGroups((prev) => {
+      const next = prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group];
+      setValue("muscleGroups", next as any);
       return next;
     });
   }
@@ -76,7 +77,8 @@ export function ExerciseSubmitForm({ autoApprove, onSuccess, redirectOnSuccess }
     }
     toast.success(autoApprove ? "Exercise added!" : "Exercise submitted for approval!");
     reset();
-    setSelectedCategoryIds([]);
+    setSelectedMovementTypes([]);
+    setSelectedMuscleGroups([]);
     onSuccess?.();
     if (redirectOnSuccess) router.push(redirectOnSuccess);
   }
@@ -107,25 +109,47 @@ export function ExerciseSubmitForm({ autoApprove, onSuccess, redirectOnSuccess }
       </div>
 
       <div className="space-y-2">
-        <Label>Categories</Label>
+        <Label>Movement Type</Label>
         <div className="flex flex-wrap gap-2">
-          {categories.map((cat) => (
+          {MOVEMENT_TYPES.map((type) => (
             <button
-              key={cat.id}
+              key={type}
               type="button"
-              onClick={() => toggleCategory(cat.id)}
+              onClick={() => toggleMovementType(type)}
               className={cn(
                 "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                selectedCategoryIds.includes(cat.id)
+                selectedMovementTypes.includes(type)
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
-              {cat.name}
+              {type}
             </button>
           ))}
         </div>
-        {errors.categoryIds && <p className="text-xs text-destructive">{errors.categoryIds.message}</p>}
+        {errors.movementTypes && <p className="text-xs text-destructive">{errors.movementTypes.message}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Primary Muscle Group</Label>
+        <div className="flex flex-wrap gap-2">
+          {MUSCLE_GROUPS.map((group) => (
+            <button
+              key={group}
+              type="button"
+              onClick={() => toggleMuscleGroup(group)}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                selectedMuscleGroups.includes(group)
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              )}
+            >
+              {group}
+            </button>
+          ))}
+        </div>
+        {errors.muscleGroups && <p className="text-xs text-destructive">{errors.muscleGroups.message}</p>}
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>

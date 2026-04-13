@@ -4,14 +4,6 @@ import { db } from "@/lib/db";
 import { z } from "zod";
 import { generateRandomDay, FocusType } from "@/lib/random-day";
 
-const FOCUS_TO_CATEGORY: Record<string, string> = {
-  UPPER_BODY: "Upper Body",
-  LOWER_BODY: "Lower Body",
-  PULL: "Pull",
-  PUSH: "Push",
-  LEGS: "Legs",
-};
-
 const generateSchema = z.object({
   focus: z.enum(["FULL_BODY", "UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"]),
   totalSets: z.number().int().min(3).max(60),
@@ -30,15 +22,30 @@ export async function POST(request: Request) {
 
   const { focus, totalSets } = parsed.data;
 
+  const focusFilter =
+    focus === "FULL_BODY"
+      ? {}
+      : focus === "PULL"
+      ? { movementTypes: { has: "PULL" as const } }
+      : focus === "PUSH"
+      ? { movementTypes: { has: "PUSH" as const } }
+      : focus === "LEGS"
+      ? { muscleGroups: { has: "LEGS" as const } }
+      : focus === "UPPER_BODY"
+      ? { muscleGroups: { hasSome: ["CHEST", "BACK", "SHOULDERS", "ARMS"] as const[] } }
+      : focus === "LOWER_BODY"
+      ? { muscleGroups: { has: "LEGS" as const } }
+      : {};
+
   const exercises = await db.exercise.findMany({
     where: {
       OR: [
         { status: "APPROVED" },
         { status: "PENDING", submittedById: session.user.id },
       ],
-      ...(focus !== "FULL_BODY" ? { categories: { some: { name: FOCUS_TO_CATEGORY[focus] } } } : {}),
+      ...focusFilter,
     },
-    select: { id: true, name: true, categories: { select: { name: true } } },
+    select: { id: true, name: true, movementTypes: true, muscleGroups: true },
   });
 
   const generated = generateRandomDay(exercises, focus as FocusType, totalSets);

@@ -18,7 +18,8 @@ export default async function ExercisesPage() {
     select: {
       id: true,
       name: true,
-      categories: { select: { id: true, name: true } },
+      movementTypes: true,
+      muscleGroups: true,
       description: true,
       demoUrl: true,
       status: true,
@@ -53,7 +54,7 @@ export default async function ExercisesPage() {
               <div key={ex.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
                 <div>
                   <p className="text-sm font-medium">{ex.name}</p>
-                  <p className="text-xs text-muted-foreground">{ex.categories.map((c: any) => c.name).join(", ")}</p>
+                  <p className="text-xs text-muted-foreground">{ex.muscleGroups.join(", ")}</p>
                 </div>
                 <Badge variant="secondary" className="text-xs">Pending</Badge>
               </div>
@@ -82,7 +83,7 @@ export default async function ExercisesPage() {
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     )}
-                    <Badge variant="outline" className="text-xs">{ex.categories.map((c: any) => c.name).join(", ")}</Badge>
+                    <Badge variant="outline" className="text-xs">{ex.muscleGroups.join(", ")}</Badge>
                   </div>
                 </div>
                 {ex.description && (

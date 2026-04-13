@@ -17,15 +17,11 @@ import { cn } from "@/lib/utils";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-interface Category {
-  id: string;
-  name: string;
-}
-
 interface Exercise {
   id: string;
   name: string;
-  categories: { name: string }[];
+  movementTypes: string[];
+  muscleGroups: string[];
   status: string;
 }
 
@@ -67,7 +63,6 @@ export function PlanBuilder({ planId, initialData, redirectTo }: Props) {
   const isEditing = !!planId;
   const [step, setStep] = useState(0);
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedDays, setSelectedDays] = useState<number[]>(
     initialData?.days.map((d) => d.dayOfWeek) ?? []
   );
@@ -93,9 +88,6 @@ export function PlanBuilder({ planId, initialData, redirectTo }: Props) {
     fetch("/api/exercises")
       .then((r) => r.json())
       .then((d) => setExercises(d.exercises ?? []));
-    fetch("/api/categories")
-      .then((r) => r.json())
-      .then((d) => setCategories(d.categories ?? []));
   }, []);
 
   function toggleDay(dayIndex: number) {
@@ -256,7 +248,6 @@ export function PlanBuilder({ planId, initialData, redirectTo }: Props) {
                 dayName={DAY_NAMES[dayField.dayOfWeek]}
                 form={form}
                 exercises={exercises}
-                categories={categories}
               />
             ))}
           </div>
@@ -322,25 +313,28 @@ function DayEditor({
   dayName,
   form,
   exercises,
-  categories,
 }: {
   dayIdx: number;
   dayName: string;
   form: UseFormReturn<PlanForm>;
   exercises: Exercise[];
-  categories: Category[];
 }) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: `days.${dayIdx}.exercises`,
   });
 
-  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [muscleFilter, setMuscleFilter] = useState<string>("ALL");
+
+  // Derive unique muscle groups from exercises
+  const allMuscleGroups = Array.from(
+    new Set(exercises.flatMap((e) => e.muscleGroups))
+  ).sort();
 
   const filtered =
-    categoryFilter === "ALL"
+    muscleFilter === "ALL"
       ? exercises
-      : exercises.filter((e) => e.categories.some((c) => c.name === categoryFilter));
+      : exercises.filter((e) => e.muscleGroups.includes(muscleFilter));
 
   function addExercise(ex: Exercise) {
     if (fields.some((f) => f.exerciseId === ex.id)) return;
@@ -357,19 +351,19 @@ function DayEditor({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-          {["ALL", ...categories.map((c) => c.name)].map((cat) => (
+          {["ALL", ...allMuscleGroups].map((mg) => (
             <button
-              key={cat}
+              key={mg}
               type="button"
-              onClick={() => setCategoryFilter(cat)}
+              onClick={() => setMuscleFilter(mg)}
               className={cn(
                 "shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                categoryFilter === cat
+                muscleFilter === mg
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
-              {cat === "ALL" ? "All" : cat}
+              {mg === "ALL" ? "All" : mg}
             </button>
           ))}
         </div>
@@ -391,7 +385,7 @@ function DayEditor({
                 )}
               >
                 <div className="font-medium truncate">{ex.name}</div>
-                <div className="text-muted-foreground">{ex.categories.map((c) => c.name).join(", ")}</div>
+                <div className="text-muted-foreground">{ex.muscleGroups.join(", ")}</div>
               </button>
             );
           })}

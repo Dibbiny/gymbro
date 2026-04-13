@@ -6,38 +6,44 @@ import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExerciseAdminActions } from "./ExerciseAdminActions";
 
-interface Category {
-  id: string;
-  name: string;
-}
-
 interface Exercise {
   id: string;
   name: string;
   description: string | null;
   demoUrl: string | null;
-  categories: { id: string; name: string }[];
+  movementTypes: string[];
+  muscleGroups: string[];
 }
 
 interface Props {
   exercises: Exercise[];
-  allCategories: Category[];
   label: string;
   dimmed?: boolean;
 }
 
-export function AdminExerciseList({ exercises, allCategories, label, dimmed }: Props) {
+export function AdminExerciseList({ exercises, label, dimmed }: Props) {
   const [search, setSearch] = useState("");
-  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
+  const [muscleGroupFilters, setMuscleGroupFilters] = useState<string[]>([]);
+
+  // Derive unique muscle groups from exercises
+  const allMuscleGroups = useMemo(() => {
+    const set = new Set<string>();
+    for (const ex of exercises) {
+      for (const mg of ex.muscleGroups) {
+        set.add(mg);
+      }
+    }
+    return Array.from(set).sort();
+  }, [exercises]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return exercises.filter((ex) => {
       const matchesSearch = !q || ex.name.toLowerCase().includes(q) || ex.description?.toLowerCase().includes(q);
-      const matchesCategory = categoryFilters.length === 0 || categoryFilters.every((id) => ex.categories.some((c) => c.id === id));
-      return matchesSearch && matchesCategory;
+      const matchesMuscleGroup = muscleGroupFilters.length === 0 || muscleGroupFilters.some((mg) => ex.muscleGroups.includes(mg));
+      return matchesSearch && matchesMuscleGroup;
     });
-  }, [exercises, search, categoryFilters]);
+  }, [exercises, search, muscleGroupFilters]);
 
   return (
     <div className="space-y-3">
@@ -62,31 +68,31 @@ export function AdminExerciseList({ exercises, allCategories, label, dimmed }: P
         )}
       </div>
 
-      {/* Category filter pills */}
+      {/* Muscle group filter pills */}
       <div className="flex gap-1.5 flex-wrap">
         <button
-          onClick={() => setCategoryFilters([])}
+          onClick={() => setMuscleGroupFilters([])}
           className={cn(
             "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-            categoryFilters.length === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+            muscleGroupFilters.length === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
           )}
         >
           All
         </button>
-        {allCategories.map((cat) => (
+        {allMuscleGroups.map((mg) => (
           <button
-            key={cat.id}
+            key={mg}
             onClick={() =>
-              setCategoryFilters((prev) =>
-                prev.includes(cat.id) ? prev.filter((id) => id !== cat.id) : [...prev, cat.id]
+              setMuscleGroupFilters((prev) =>
+                prev.includes(mg) ? prev.filter((g) => g !== mg) : [...prev, mg]
               )
             }
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              categoryFilters.includes(cat.id) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+              muscleGroupFilters.includes(mg) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
             )}
           >
-            {cat.name}
+            {mg}
           </button>
         ))}
       </div>
@@ -107,7 +113,7 @@ export function AdminExerciseList({ exercises, allCategories, label, dimmed }: P
             >
               <div className="min-w-0">
                 <span className="text-sm font-medium">{ex.name}</span>
-                <span className="text-xs text-muted-foreground ml-2">{ex.categories.map((c) => c.name).join(", ")}</span>
+                <span className="text-xs text-muted-foreground ml-2">{ex.muscleGroups.join(", ")}</span>
               </div>
               <ExerciseAdminActions exercise={ex} />
             </div>

@@ -3,13 +3,15 @@ export type FocusType = "FULL_BODY" | "UPPER_BODY" | "LOWER_BODY" | "PULL" | "PU
 interface ExerciseRow {
   id: string;
   name: string;
-  categories: { name: string }[];
+  movementTypes: string[];
+  muscleGroups: string[];
 }
 
 interface GeneratedExercise {
   exerciseId: string;
   exerciseName: string;
-  categories: string[];
+  movementTypes: string[];
+  muscleGroups: string[];
   sets: number;
   reps: number;
   restSeconds: number;
@@ -39,17 +41,17 @@ export function generateRandomDay(
   let pool: ExerciseRow[];
 
   if (focus === "FULL_BODY") {
-    // Sample from all categories proportionally
-    const byCategory = new Map<string, ExerciseRow[]>();
+    // Sample from all muscle groups proportionally
+    const byMuscleGroup = new Map<string, ExerciseRow[]>();
     for (const ex of exercises) {
-      const catName = ex.categories[0]?.name ?? "Other";
-      if (!byCategory.has(catName)) byCategory.set(catName, []);
-      byCategory.get(catName)!.push(ex);
+      const group = ex.muscleGroups[0] ?? "OTHER";
+      if (!byMuscleGroup.has(group)) byMuscleGroup.set(group, []);
+      byMuscleGroup.get(group)!.push(ex);
     }
-    // Pick up to 2 exercises from each category
+    // Pick up to 2 exercises from each muscle group
     const selected: ExerciseRow[] = [];
-    for (const catExercises of byCategory.values()) {
-      selected.push(...shuffle(catExercises).slice(0, 2));
+    for (const groupExercises of byMuscleGroup.values()) {
+      selected.push(...shuffle(groupExercises).slice(0, 2));
     }
     pool = shuffle(selected);
   } else {
@@ -75,7 +77,8 @@ export function generateRandomDay(
     result.push({
       exerciseId: ex.id,
       exerciseName: ex.name,
-      categories: ex.categories.map((c) => c.name),
+      movementTypes: ex.movementTypes,
+      muscleGroups: ex.muscleGroups,
       sets,
       reps: randInt(8, 12),
       restSeconds: 90,

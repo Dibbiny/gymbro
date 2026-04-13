@@ -34,6 +34,21 @@ enum FollowStatus {
   REJECTED
 }
 
+enum MovementType {
+  PULL
+  PUSH
+  CORE
+}
+
+enum MuscleGroup {
+  LEGS
+  BACK
+  ARMS
+  CHEST
+  SHOULDERS
+  CORE
+}
+
 model User {
   id               String   @id @default(cuid())
   username         String   @unique
@@ -81,18 +96,11 @@ model Exercise {
 
   planDayExercises PlanDayExercise[]
   setLogs          SetLog[]
-  categories       Category[]
+  movementTypes    MovementType[] @default([])
+  muscleGroups     MuscleGroup[]  @default([])
 
   @@index([status])
   @@map("exercises")
-}
-
-model Category {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  createdAt DateTime   @default(now())
-  exercises Exercise[]
-  @@map("categories")
 }
 
 model TrainingPlan {

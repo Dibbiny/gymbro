@@ -13,7 +13,8 @@ interface Props {
   name: string;
   description?: string | null;
   demoUrl?: string | null;
-  categories: string[];
+  movementTypes: string[];
+  muscleGroups: string[];
 }
 
 function getYouTubeEmbedUrl(url: string): string | null {
@@ -37,8 +38,9 @@ function getYouTubeEmbedUrl(url: string): string | null {
   return null;
 }
 
-export function ExerciseInfoButton({ name, description, demoUrl, categories }: Props) {
+export function ExerciseInfoButton({ name, description, demoUrl, movementTypes, muscleGroups }: Props) {
   const embedUrl = demoUrl ? getYouTubeEmbedUrl(demoUrl) : null;
+  const tags = [...movementTypes, ...muscleGroups];
 
   return (
     <Dialog>
@@ -52,8 +54,8 @@ export function ExerciseInfoButton({ name, description, demoUrl, categories }: P
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{name}</DialogTitle>
-          {categories.length > 0 && (
-            <p className="text-xs text-muted-foreground">{categories.join(" · ")}</p>
+          {tags.length > 0 && (
+            <p className="text-xs text-muted-foreground">{tags.join(" · ")}</p>
           )}
         </DialogHeader>
 

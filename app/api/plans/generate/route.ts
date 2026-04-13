@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   // Fetch all approved exercises
   const exercises = await db.exercise.findMany({
     where: { status: "APPROVED" },
-    select: { id: true, name: true, categories: { select: { name: true } } },
+    select: { id: true, name: true, movementTypes: true, muscleGroups: true },
     orderBy: { name: "asc" },
   });
 
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
   }
 
   const exerciseListText = exercises
-    .map((e) => `- "${e.name}" (${e.categories.map((c) => c.name).join(", ") || "general"})`)
+    .map((e) => `- "${e.name}" (${[...e.movementTypes, ...e.muscleGroups].join(", ") || "general"})`)
     .join("\n");
 
   const prompt = `You are a professional fitness coach. Create a personalized workout plan based on the user profile below.
