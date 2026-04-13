@@ -27,7 +27,8 @@ const SET_OPTIONS = [9, 12, 15, 18, 21, 24];
 interface GeneratedExercise {
   exerciseId: string;
   exerciseName: string;
-  categories: string[];
+  movementTypes: string[];
+  muscleGroups: string[];
   sets: number;
   reps: number;
   restSeconds: number;
@@ -167,7 +168,7 @@ export default function RandomDayPage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold">{ex.exerciseName}</p>
-                        <p className="text-xs text-muted-foreground">{ex.categories.join(", ")}</p>
+                        <p className="text-xs text-muted-foreground">{ex.muscleGroups.join(", ")}</p>
                       </div>
                     </div>
                     <div className="text-right text-xs text-muted-foreground">
