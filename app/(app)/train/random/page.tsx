@@ -4,22 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Dumbbell, RefreshCw, Play, ChevronLeft } from "lucide-react";
+import { RefreshCw, Play, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 
-type Focus = "FULL_BODY" | "UPPER_BODY" | "LOWER_BODY" | "PULL" | "PUSH" | "LEGS";
-
-const FOCUS_OPTIONS: { value: Focus; label: string; description: string }[] = [
-  { value: "FULL_BODY", label: "Full Body", description: "All muscle groups" },
-  { value: "UPPER_BODY", label: "Upper Body", description: "Chest, shoulders, arms" },
-  { value: "LOWER_BODY", label: "Lower Body", description: "Glutes, hamstrings" },
-  { value: "PULL", label: "Pull", description: "Back, biceps" },
-  { value: "PUSH", label: "Push", description: "Chest, shoulders, triceps" },
-  { value: "LEGS", label: "Legs", description: "Quads, hamstrings, calves" },
+const MUSCLE_OPTIONS = [
+  { value: "CHEST", label: "Chest" },
+  { value: "BACK", label: "Back" },
+  { value: "SHOULDERS", label: "Shoulders" },
+  { value: "ARMS", label: "Arms" },
+  { value: "LEGS", label: "Legs" },
+  { value: "CORE", label: "Core" },
 ];
 
 const SET_OPTIONS = [9, 12, 15, 18, 21, 24];
@@ -37,11 +34,22 @@ interface GeneratedExercise {
 
 export default function RandomDayPage() {
   const router = useRouter();
-  const [focus, setFocus] = useState<Focus>("FULL_BODY");
+  const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
   const [totalSets, setTotalSets] = useState(15);
   const [generated, setGenerated] = useState<GeneratedExercise[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
+
+  function toggleMuscle(value: string) {
+    setSelectedMuscles((prev) =>
+      prev.includes(value) ? prev.filter((m) => m !== value) : [...prev, value]
+    );
+    setGenerated(null);
+  }
+
+  const focusLabel = selectedMuscles.length === 0
+    ? "Full Body"
+    : selectedMuscles.map((m) => MUSCLE_OPTIONS.find((o) => o.value === m)?.label).join(", ");
 
   async function handleGenerate() {
     setLoading(true);
@@ -49,13 +57,10 @@ export default function RandomDayPage() {
       const res = await fetch("/api/random-day", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ focus, totalSets }),
+        body: JSON.stringify({ muscleGroups: selectedMuscles, totalSets }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Failed to generate");
-        return;
-      }
+      if (!res.ok) { toast.error(data.error ?? "Failed to generate"); return; }
       setGenerated(data.exercises);
     } finally {
       setLoading(false);
@@ -72,10 +77,7 @@ export default function RandomDayPage() {
         body: JSON.stringify({ exercises: generated }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        toast.error("Failed to start session");
-        return;
-      }
+      if (!res.ok) { toast.error("Failed to start session"); return; }
       router.push(`/train/session/${data.sessionId}`);
     } finally {
       setStarting(false);
@@ -94,28 +96,42 @@ export default function RandomDayPage() {
         </div>
       </div>
 
-      {/* Focus selector */}
+      {/* Muscle group selector */}
       <div className="space-y-2">
-        <p className="text-sm font-semibold">Focus</p>
-        <div className="grid grid-cols-2 gap-2">
-          {FOCUS_OPTIONS.map((opt) => (
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold">Muscle groups</p>
+          {selectedMuscles.length > 0 && (
             <button
-              key={opt.value}
               type="button"
-              onClick={() => { setFocus(opt.value); setGenerated(null); }}
-              className={cn(
-                "rounded-xl border p-3 text-left transition-colors",
-                focus === opt.value
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:bg-muted"
-              )}
+              onClick={() => { setSelectedMuscles([]); setGenerated(null); }}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              <p className={cn("text-sm font-semibold", focus === opt.value && "text-primary")}>
-                {opt.label}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">{opt.description}</p>
+              Clear all
             </button>
-          ))}
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {selectedMuscles.length === 0 ? "None selected — all muscles included" : `${selectedMuscles.length} selected`}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {MUSCLE_OPTIONS.map((opt) => {
+            const active = selectedMuscles.includes(opt.value);
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => toggleMuscle(opt.value)}
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-medium transition-colors border",
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted text-muted-foreground border-transparent hover:bg-muted/80"
+                )}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -151,11 +167,10 @@ export default function RandomDayPage() {
       {generated && (
         <>
           <Separator />
-
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold">{generated.length} exercises · {totalSets} sets</p>
-              <Badge variant="secondary">{FOCUS_OPTIONS.find(f => f.value === focus)?.label}</Badge>
+              <span className="text-xs text-muted-foreground">{focusLabel}</span>
             </div>
 
             {generated.map((ex, i) => (

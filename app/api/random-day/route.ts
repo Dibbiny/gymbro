@@ -2,14 +2,13 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
-import { generateRandomDay, FocusType } from "@/lib/random-day";
+import { generateRandomDay } from "@/lib/random-day";
 
 const generateSchema = z.object({
-  focus: z.enum(["FULL_BODY", "UPPER_BODY", "LOWER_BODY", "PULL", "PUSH", "LEGS"]),
+  muscleGroups: z.array(z.enum(["CHEST", "BACK", "SHOULDERS", "ARMS", "LEGS", "CORE"])).optional(),
   totalSets: z.number().int().min(3).max(60),
 });
 
-// POST /api/random-day/generate — generate a day (no DB write yet)
 export async function POST(request: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -20,22 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const { focus, totalSets } = parsed.data;
-
-  const focusFilter =
-    focus === "FULL_BODY"
-      ? {}
-      : focus === "PULL"
-      ? { movementTypes: { has: "PULL" as const } }
-      : focus === "PUSH"
-      ? { movementTypes: { has: "PUSH" as const } }
-      : focus === "LEGS"
-      ? { muscleGroups: { has: "LEGS" as const } }
-      : focus === "UPPER_BODY"
-      ? { muscleGroups: { hasSome: ["CHEST", "BACK", "SHOULDERS", "ARMS"] as any } }
-      : focus === "LOWER_BODY"
-      ? { muscleGroups: { has: "LEGS" as const } }
-      : {};
+  const { muscleGroups = [], totalSets } = parsed.data;
 
   const exercises = await db.exercise.findMany({
     where: {
@@ -43,16 +27,16 @@ export async function POST(request: Request) {
         { status: "APPROVED" },
         { status: "PENDING", submittedById: session.user.id },
       ],
-      ...focusFilter,
+      ...(muscleGroups.length > 0 ? { muscleGroups: { hasSome: muscleGroups } } : {}),
     },
     select: { id: true, name: true, movementTypes: true, muscleGroups: true },
   });
 
-  const generated = generateRandomDay(exercises, focus as FocusType, totalSets);
+  const generated = generateRandomDay(exercises, totalSets);
 
   if (generated.length === 0) {
     return NextResponse.json(
-      { error: "No exercises found for this focus. Add more exercises first." },
+      { error: "No exercises found for these muscle groups. Try selecting different ones." },
       { status: 422 }
     );
   }
@@ -60,7 +44,6 @@ export async function POST(request: Request) {
   return NextResponse.json({ exercises: generated });
 }
 
-// POST /api/random-day/start — start an actual session from a random day
 export async function PUT(request: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -82,14 +65,10 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: parsed.data }, { status: 400 });
   }
 
-  // Create an ephemeral plan day + session (no enrollment)
   const trainingSession = await db.trainingSession.create({
     data: { userId: session.user.id },
   });
 
-  // We store exercises in a virtual plan day attached to this session
-  // Since random sessions have no planDay, we embed the exercise list in the response
-  // The session page reads exercises from the API when planDay is null
   await db.trainingSession.update({
     where: { id: trainingSession.id },
     data: {
