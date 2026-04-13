@@ -19,13 +19,18 @@ export default function ForgotPasswordPage() {
     if (!email.trim()) return;
     setLoading(true);
     try {
-      await fetch("/api/auth/forgot-password", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
       });
-      // Always show success to avoid exposing whether email exists
+      if (!res.ok) {
+        toast.error("Something went wrong. Please try again.");
+        return;
+      }
       setSent(true);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
