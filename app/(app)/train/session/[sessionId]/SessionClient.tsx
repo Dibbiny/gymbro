@@ -340,7 +340,18 @@ export function SessionClient({
     }
   }
 
-  if (!currentExercise && !shareDialog) {
+  if (!currentExercise) {
+    if (shareDialog) {
+      return (
+        <ShareWorkoutDialog
+          sessionId={shareDialog.sessionId}
+          postType={shareDialog.planCompleted ? "PLAN_COMPLETION" : "TRAINING_DAY"}
+          open={true}
+          onClose={() => { setShareDialog(null); router.push("/feed"); router.refresh(); }}
+          onPosted={() => { setShareDialog(null); router.push("/feed"); router.refresh(); }}
+        />
+      );
+    }
     return (
       <div className="text-center py-16 space-y-3">
         <Dumbbell className="h-10 w-10 mx-auto text-muted-foreground" />
