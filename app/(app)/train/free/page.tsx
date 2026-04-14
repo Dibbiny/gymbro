@@ -33,6 +33,10 @@ export default async function FreeTrainingPage({ searchParams }: Props) {
             },
           },
         },
+        setLogs: {
+          orderBy: [{ exerciseId: "asc" }, { setNumber: "asc" }],
+          include: { exercise: { select: { id: true, name: true } } },
+        },
       },
     });
 
@@ -48,27 +52,64 @@ export default async function FreeTrainingPage({ searchParams }: Props) {
           orderIndex: i,
         }));
       } else if (prev.notes) {
-        // Free / random session — pull from notes JSON
+        // Free / random session — rebuild from notes JSON (preserves target sets/reps/rest)
         try {
           const parsed = JSON.parse(prev.notes);
-          if (Array.isArray(parsed.exercises)) {
-            // Look up names from DB (exercises stored in notes may have stale names)
-            const ids = parsed.exercises.map((e: any) => e.exerciseId);
+          const allExercises = [
+            ...(Array.isArray(parsed.exercises) ? parsed.exercises : []),
+            ...(Array.isArray(parsed.extraExercises) ? parsed.extraExercises : []),
+          ];
+          if (allExercises.length > 0) {
+            const ids = allExercises.map((e: any) => e.exerciseId);
             const rows = await db.exercise.findMany({
               where: { id: { in: ids } },
               select: { id: true, name: true },
             });
             const nameMap = new Map(rows.map((r: any) => [r.id, r.name]));
-            initialExercises = parsed.exercises.map((e: any, i: number) => ({
-              exerciseId: e.exerciseId,
-              exerciseName: nameMap.get(e.exerciseId) ?? e.exerciseName ?? e.exerciseId,
-              sets: e.sets ?? 3,
-              reps: e.reps ?? 10,
-              restSeconds: e.restSeconds ?? 90,
-              orderIndex: i,
-            }));
+            // Dedupe by exerciseId (extras may overlap with originals)
+            const seen = new Set<string>();
+            initialExercises = allExercises
+              .filter((e: any) => {
+                if (seen.has(e.exerciseId)) return false;
+                seen.add(e.exerciseId);
+                return true;
+              })
+              .map((e: any, i: number) => ({
+                exerciseId: e.exerciseId,
+                exerciseName: nameMap.get(e.exerciseId) ?? e.exerciseName ?? e.exerciseId,
+                sets: e.sets ?? 3,
+                reps: e.reps ?? 10,
+                restSeconds: e.restSeconds ?? 90,
+                orderIndex: i,
+              }));
           }
         } catch {}
+      }
+
+      // Fallback: rebuild from set logs if still empty (handles plan sessions where plan was deleted)
+      if (initialExercises.length === 0 && prev.setLogs.length > 0) {
+        const byExercise = new Map<string, { name: string; sets: number; reps: number }>();
+        for (const log of prev.setLogs as any[]) {
+          const existing = byExercise.get(log.exerciseId);
+          if (!existing) {
+            byExercise.set(log.exerciseId, {
+              name: log.exercise.name,
+              sets: log.setNumber,
+              reps: log.repsCompleted,
+            });
+          } else {
+            existing.sets = Math.max(existing.sets, log.setNumber);
+            existing.reps = log.repsCompleted; // use last set's reps
+          }
+        }
+        initialExercises = Array.from(byExercise.entries()).map(([exerciseId, data], i) => ({
+          exerciseId,
+          exerciseName: data.name,
+          sets: data.sets,
+          reps: data.reps,
+          restSeconds: 90,
+          orderIndex: i,
+        }));
       }
     }
   }
