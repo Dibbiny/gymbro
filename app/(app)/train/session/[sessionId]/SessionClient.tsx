@@ -56,6 +56,7 @@ export function SessionClient({
 }: Props) {
   const router = useRouter();
   const [isFinishing, setIsFinishing] = useState(false);
+  const [isSavingSet, setIsSavingSet] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [showAddExercise, setShowAddExercise] = useState(false);
@@ -175,7 +176,8 @@ export function SessionClient({
   }
 
   async function handleSetComplete(weightKg: number | null, repsCompleted: number, notes: string | null, setNumber?: number) {
-    if (!currentExercise) return;
+    if (!currentExercise || isSavingSet) return;
+    setIsSavingSet(true);
     const targetSet = setNumber ?? currentSet;
 
     logSet({
@@ -199,33 +201,37 @@ export function SessionClient({
       }),
     });
 
-    if (res.ok) {
-      markSetSaved(currentExercise.exerciseId, targetSet);
-    } else {
-      toast.error("Failed to save set — check your connection");
-      return;
-    }
-
-    if (setNumber !== undefined) return;
-
-    const totalSets = effectiveSets(currentExercise);
-    const isLastSetOfExercise = currentSet >= totalSets;
-
-    if (isLastSetOfExercise && isEffectivelyLastExercise()) {
-      setShowFinishConfirm(true);
-      return;
-    }
-
-    startRest();
-    workerStartRest(currentExercise.restSeconds);
-
-    if (currentSet < totalSets) {
-      useTrainingSession.setState({ currentSet: currentSet + 1 });
-    } else {
-      const next = nextActiveIndex(currentExerciseIndex);
-      if (next !== null) {
-        useTrainingSession.setState({ currentExerciseIndex: next, currentSet: 1 });
+    try {
+      if (res.ok) {
+        markSetSaved(currentExercise.exerciseId, targetSet);
+      } else {
+        toast.error("Failed to save set — check your connection");
+        return;
       }
+
+      if (setNumber !== undefined) return;
+
+      const totalSets = effectiveSets(currentExercise);
+      const isLastSetOfExercise = currentSet >= totalSets;
+
+      if (isLastSetOfExercise && isEffectivelyLastExercise()) {
+        setShowFinishConfirm(true);
+        return;
+      }
+
+      startRest();
+      workerStartRest(currentExercise.restSeconds);
+
+      if (currentSet < totalSets) {
+        useTrainingSession.setState({ currentSet: currentSet + 1 });
+      } else {
+        const next = nextActiveIndex(currentExerciseIndex);
+        if (next !== null) {
+          useTrainingSession.setState({ currentExerciseIndex: next, currentSet: 1 });
+        }
+      }
+    } finally {
+      setIsSavingSet(false);
     }
   }
 
