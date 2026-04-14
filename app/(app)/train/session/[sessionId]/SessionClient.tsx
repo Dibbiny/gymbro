@@ -334,7 +334,7 @@ export function SessionClient({
     }
   }
 
-  if (!currentExercise) {
+  if (!currentExercise && !shareDialog) {
     return (
       <div className="text-center py-16 space-y-3">
         <Dumbbell className="h-10 w-10 mx-auto text-muted-foreground" />
