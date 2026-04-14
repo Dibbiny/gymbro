@@ -211,7 +211,15 @@ export default async function AdminUserDetailPage({ params }: Props) {
               <div key={s.id} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
                 <div>
                   <p className="font-medium">
-                    {s.planDay ? `${DAY_NAMES[s.planDay.dayOfWeek]} — ${s.planDay.label ?? s.planDay.plan?.title}` : "Random Day"}
+                    {(() => {
+                      if (s.planDay) return `${DAY_NAMES[s.planDay.dayOfWeek]} — ${s.planDay.label ?? s.planDay.plan?.title}`;
+                      try {
+                        const n = JSON.parse(s.notes ?? "{}");
+                        if (n.freeTraining) return "Custom Workout";
+                        if (n.randomDay) return "Random Day";
+                      } catch {}
+                      return "Random Day";
+                    })()}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(s.completedAt).toLocaleDateString()} · {s._count.setLogs} sets
