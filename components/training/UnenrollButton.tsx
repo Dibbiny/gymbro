@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LogOut } from "lucide-react";
@@ -15,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 
 interface Props {
   planId: string;
@@ -23,22 +23,13 @@ interface Props {
 
 export function UnenrollButton({ planId, planTitle }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
 
-  async function handleUnenroll() {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/plans/${planId}/enroll`, { method: "DELETE" });
-      if (!res.ok) {
-        toast.error("Failed to unenroll");
-        return;
-      }
-      toast.success(`Unenrolled from "${planTitle}"`);
-      router.refresh();
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [handleUnenroll, loading] = useAsyncAction(async () => {
+    const res = await fetch(`/api/plans/${planId}/enroll`, { method: "DELETE" });
+    if (!res.ok) { toast.error("Failed to unenroll"); return; }
+    toast.success(`Unenrolled from "${planTitle}"`);
+    router.refresh();
+  });
 
   return (
     <AlertDialog>

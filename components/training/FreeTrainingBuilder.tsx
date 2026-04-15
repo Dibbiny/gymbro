@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Minus, X, Dumbbell, Play, Loader2 } from "lucide-react";
 import { ExercisePicker, PickableExercise } from "./ExercisePicker";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 
 interface FreeExercise {
   exerciseId: string;
@@ -27,7 +28,6 @@ export function FreeTrainingBuilder({ initialExercises = [], initialName = "" }:
   const [exercises, setExercises] = useState<FreeExercise[]>(initialExercises);
   const [workoutName, setWorkoutName] = useState(initialName);
   const [creating, setCreating] = useState(false);
-  const [starting, setStarting] = useState(false);
 
   function addExercise(ex: PickableExercise) {
     if (exercises.some((e) => e.exerciseId === ex.id)) {
@@ -84,22 +84,17 @@ export function FreeTrainingBuilder({ initialExercises = [], initialName = "" }:
     }
   }
 
-  async function handleStart() {
+  const [handleStart, starting] = useAsyncAction(async () => {
     if (exercises.length === 0) return;
-    setStarting(true);
-    try {
-      const res = await fetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ freeExercises: exercises, workoutName: workoutName.trim() || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) { toast.error(data.error ?? "Failed to start session"); return; }
-      router.push(`/train/session/${data.session.id}`);
-    } finally {
-      setStarting(false);
-    }
-  }
+    const res = await fetch("/api/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ freeExercises: exercises, workoutName: workoutName.trim() || undefined }),
+    });
+    const data = await res.json();
+    if (!res.ok) { toast.error(data.error ?? "Failed to start session"); return; }
+    router.push(`/train/session/${data.session.id}`);
+  });
 
   const addedIds = exercises.map((e) => e.exerciseId);
 

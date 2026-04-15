@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { UserPlus, UserCheck, Clock } from "lucide-react";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 
 interface Props {
   targetUserId: string;
@@ -14,38 +15,32 @@ interface Props {
 export function FollowButton({ targetUserId, initialStatus }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
-  const [loading, setLoading] = useState(false);
 
-  async function handleFollow() {
-    setLoading(true);
-    try {
-      if (status === "ACCEPTED") {
-        // Unfollow
-        const res = await fetch(`/api/follows?targetUserId=${targetUserId}`, { method: "DELETE" });
-        if (res.ok) { setStatus(null); toast.success("Unfollowed"); }
-        return;
-      }
-      if (status === "PENDING") {
-        // Cancel request
-        const res = await fetch(`/api/follows?targetUserId=${targetUserId}`, { method: "DELETE" });
-        if (res.ok) { setStatus(null); toast.success("Request cancelled"); }
-        return;
-      }
-      // Send request
-      const res = await fetch("/api/follows", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUserId }),
-      });
-      if (res.ok) {
-        setStatus("PENDING");
-        toast.success("Follow request sent");
-        router.refresh();
-      }
-    } finally {
-      setLoading(false);
+  const [handleFollow, loading] = useAsyncAction(async () => {
+    if (status === "ACCEPTED") {
+      // Unfollow
+      const res = await fetch(`/api/follows?targetUserId=${targetUserId}`, { method: "DELETE" });
+      if (res.ok) { setStatus(null); toast.success("Unfollowed"); }
+      return;
     }
-  }
+    if (status === "PENDING") {
+      // Cancel request
+      const res = await fetch(`/api/follows?targetUserId=${targetUserId}`, { method: "DELETE" });
+      if (res.ok) { setStatus(null); toast.success("Request cancelled"); }
+      return;
+    }
+    // Send request
+    const res = await fetch("/api/follows", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetUserId }),
+    });
+    if (res.ok) {
+      setStatus("PENDING");
+      toast.success("Follow request sent");
+      router.refresh();
+    }
+  });
 
   if (status === "ACCEPTED") {
     return (

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,23 +22,14 @@ interface Props {
 
 export function DeleteSessionButton({ sessionId }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
 
-  async function handleDelete() {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/sessions/${sessionId}`, { method: "DELETE" });
-      if (!res.ok) {
-        toast.error("Failed to delete session");
-        return;
-      }
-      toast.success("Session deleted");
-      router.push("/history");
-      router.refresh();
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [handleDelete, loading] = useAsyncAction(async () => {
+    const res = await fetch(`/api/sessions/${sessionId}`, { method: "DELETE" });
+    if (!res.ok) { toast.error("Failed to delete session"); return; }
+    toast.success("Session deleted");
+    router.push("/history");
+    router.refresh();
+  });
 
   return (
     <AlertDialog>

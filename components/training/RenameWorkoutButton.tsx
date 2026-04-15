@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 
 interface Props {
   sessionId: string;
@@ -14,30 +15,24 @@ export function RenameWorkoutButton({ sessionId, currentName }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(currentName);
-  const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editing) inputRef.current?.focus();
   }, [editing]);
 
-  async function handleSave() {
+  const [handleSave, saving] = useAsyncAction(async () => {
     const trimmed = value.trim();
     if (trimmed === currentName) { setEditing(false); return; }
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/sessions/${sessionId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workoutName: trimmed }),
-      });
-      if (!res.ok) { toast.error("Failed to rename workout"); return; }
-      setEditing(false);
-      router.refresh();
-    } finally {
-      setSaving(false);
-    }
-  }
+    const res = await fetch(`/api/sessions/${sessionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workoutName: trimmed }),
+    });
+    if (!res.ok) { toast.error("Failed to rename workout"); return; }
+    setEditing(false);
+    router.refresh();
+  });
 
   function handleCancel() {
     setValue(currentName);
