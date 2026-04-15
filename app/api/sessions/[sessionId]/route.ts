@@ -7,6 +7,7 @@ import { awardXP } from "@/lib/xp";
 const updateSchema = z.object({
   pausedDuration: z.number().int().min(0).optional(),
   notes: z.string().max(20000).optional(),
+  workoutName: z.string().max(60).optional(),
 });
 
 // GET /api/sessions/[sessionId]
@@ -54,15 +55,12 @@ export async function PATCH(
 
   const existing = await db.trainingSession.findUnique({
     where: { id: sessionId },
-    select: { userId: true, completedAt: true },
+    select: { userId: true, completedAt: true, notes: true },
   });
 
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (existing.userId !== session.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  if (existing.completedAt) {
-    return NextResponse.json({ error: "Session already completed" }, { status: 400 });
   }
 
   const body = await request.json();
@@ -71,9 +69,26 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
+  // workoutName is allowed on completed sessions; other fields are not
+  if (existing.completedAt && (parsed.data.pausedDuration !== undefined || parsed.data.notes !== undefined)) {
+    return NextResponse.json({ error: "Session already completed" }, { status: 400 });
+  }
+
+  let updateData: Record<string, unknown> = {};
+
+  if (parsed.data.workoutName !== undefined) {
+    // Merge workoutName into existing notes JSON
+    let notesObj: Record<string, unknown> = {};
+    try { notesObj = JSON.parse(existing.notes ?? "{}"); } catch {}
+    notesObj.workoutName = parsed.data.workoutName || null;
+    updateData.notes = JSON.stringify(notesObj);
+  }
+  if (parsed.data.pausedDuration !== undefined) updateData.pausedDuration = parsed.data.pausedDuration;
+  if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
+
   const updated = await db.trainingSession.update({
     where: { id: sessionId },
-    data: parsed.data,
+    data: updateData,
   });
 
   return NextResponse.json({ session: updated });

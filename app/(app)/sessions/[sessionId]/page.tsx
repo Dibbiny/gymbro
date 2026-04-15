@@ -6,6 +6,7 @@ import { ChevronLeft, Dumbbell, Clock, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "@/lib/time";
 import { DeleteSessionButton } from "@/components/training/DeleteSessionButton";
+import { RenameWorkoutButton } from "@/components/training/RenameWorkoutButton";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -74,17 +75,19 @@ export default async function SessionDetailPage({ params }: Props) {
 
   let isRandomDay = false;
   let isFreeTraining = false;
+  let workoutName: string | null = null;
   try {
     if (session.notes) {
       const parsed = JSON.parse(session.notes);
       isRandomDay = parsed?.randomDay === true;
       isFreeTraining = parsed?.freeTraining === true;
+      workoutName = parsed?.workoutName ?? null;
     }
   } catch {}
 
   const canRepeat = isOwner;
   const dayLabel = isFreeTraining
-    ? "Custom Workout"
+    ? (workoutName ?? "Custom Workout")
     : isRandomDay
     ? "Random Day"
     : session.planDay?.label ?? (session.planDay ? DAY_NAMES[session.planDay.dayOfWeek] : "Workout");
@@ -96,8 +99,11 @@ export default async function SessionDetailPage({ params }: Props) {
         <Link href="/history" className="text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <div className="flex-1 min-w-0">
+        <div className="flex flex-1 items-center gap-2 min-w-0">
           <h1 className="text-xl font-bold truncate">{dayLabel}</h1>
+          {isOwner && isFreeTraining && (
+            <RenameWorkoutButton sessionId={sessionId} currentName={workoutName ?? ""} />
+          )}
           {session.planDay?.plan && (
             <p className="text-sm text-muted-foreground">{session.planDay.plan.title}</p>
           )}

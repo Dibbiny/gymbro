@@ -19,11 +19,13 @@ interface FreeExercise {
 
 interface Props {
   initialExercises?: FreeExercise[];
+  initialName?: string;
 }
 
-export function FreeTrainingBuilder({ initialExercises = [] }: Props) {
+export function FreeTrainingBuilder({ initialExercises = [], initialName = "" }: Props) {
   const router = useRouter();
   const [exercises, setExercises] = useState<FreeExercise[]>(initialExercises);
+  const [workoutName, setWorkoutName] = useState(initialName);
   const [creating, setCreating] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -89,7 +91,7 @@ export function FreeTrainingBuilder({ initialExercises = [] }: Props) {
       const res = await fetch("/api/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ freeExercises: exercises }),
+        body: JSON.stringify({ freeExercises: exercises, workoutName: workoutName.trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error ?? "Failed to start session"); return; }
@@ -103,6 +105,19 @@ export function FreeTrainingBuilder({ initialExercises = [] }: Props) {
 
   return (
     <div className="space-y-5">
+      {/* Optional workout name */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">Workout name <span className="text-muted-foreground font-normal">(optional)</span></label>
+        <input
+          type="text"
+          value={workoutName}
+          onChange={(e) => setWorkoutName(e.target.value)}
+          placeholder="e.g. Push Day, Leg Day…"
+          maxLength={60}
+          className="w-full h-9 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+
       {/* Exercise picker */}
       <ExercisePicker
         addedIds={addedIds}

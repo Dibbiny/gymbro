@@ -215,7 +215,7 @@ export default async function AdminUserDetailPage({ params }: Props) {
                       if (s.planDay) return `${DAY_NAMES[s.planDay.dayOfWeek]} — ${s.planDay.label ?? s.planDay.plan?.title}`;
                       try {
                         const n = JSON.parse(s.notes ?? "{}");
-                        if (n.freeTraining) return "Custom Workout";
+                        if (n.freeTraining) return n.workoutName ?? "Custom Workout";
                         if (n.randomDay) return "Random Day";
                       } catch {}
                       return "Random Day";

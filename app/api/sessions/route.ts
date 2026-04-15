@@ -16,6 +16,7 @@ const startSchema = z.object({
   enrollmentId: z.string().optional(),
   planDayId: z.string().optional(),
   freeExercises: z.array(freeExerciseSchema).min(1).optional(),
+  workoutName: z.string().max(60).optional(),
 });
 
 // POST /api/sessions — start a new training session
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
       enrollmentId: parsed.data.enrollmentId ?? null,
       planDayId: parsed.data.planDayId ?? null,
       ...(parsed.data.freeExercises
-        ? { notes: JSON.stringify({ freeTraining: true, exercises: parsed.data.freeExercises }) }
+        ? { notes: JSON.stringify({ freeTraining: true, workoutName: parsed.data.workoutName ?? null, exercises: parsed.data.freeExercises }) }
         : {}),
     },
   });

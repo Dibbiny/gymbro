@@ -19,6 +19,7 @@ export default async function FreeTrainingPage({ searchParams }: Props) {
     restSeconds: number;
     orderIndex: number;
   }[] = [];
+  let initialName = "";
 
   if (again) {
     const session = await auth();
@@ -55,6 +56,7 @@ export default async function FreeTrainingPage({ searchParams }: Props) {
         // Free / random session — rebuild from notes JSON (preserves target sets/reps/rest)
         try {
           const parsed = JSON.parse(prev.notes);
+          if (parsed.workoutName) initialName = parsed.workoutName;
           const allExercises = [
             ...(Array.isArray(parsed.exercises) ? parsed.exercises : []),
             ...(Array.isArray(parsed.extraExercises) ? parsed.extraExercises : []),
@@ -129,7 +131,7 @@ export default async function FreeTrainingPage({ searchParams }: Props) {
           Add exercises one by one and track your sets, reps, and weights in real time.
         </p>
       )}
-      <FreeTrainingBuilder initialExercises={initialExercises} />
+      <FreeTrainingBuilder initialExercises={initialExercises} initialName={initialName} />
     </div>
   );
 }

@@ -143,17 +143,19 @@ export default async function HistoryPage({ searchParams }: Props) {
 
               let isRandomDay = false;
               let isFreeTraining = false;
+              let workoutName: string | null = null;
               try {
                 if (s.notes) {
                   const parsed = JSON.parse(s.notes);
                   isRandomDay = parsed.randomDay === true;
                   isFreeTraining = parsed.freeTraining === true;
+                  workoutName = parsed.workoutName ?? null;
                 }
               } catch {}
 
               const canRepeat = true;
               const label = isFreeTraining
-                ? "Custom Workout"
+                ? (workoutName ?? "Custom Workout")
                 : isRandomDay
                 ? "Random Day"
                 : s.planDay?.label ?? (s.planDay ? DAY_NAMES[s.planDay.dayOfWeek] : "Workout");

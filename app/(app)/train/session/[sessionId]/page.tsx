@@ -64,6 +64,7 @@ export default async function SessionPage({ params }: Props) {
       const parsed = JSON.parse(trainingSession.notes);
       const isFree = parsed.freeTraining === true;
       const isRandom = parsed.randomDay === true;
+      const parsedWorkoutName: string | null = parsed.workoutName ?? null;
       if ((isFree || isRandom) && Array.isArray(parsed.exercises)) {
         isRandomDay = isRandom;
         const parsedExercises: { exerciseId: string; exerciseName?: string; sets: number; reps: number; restSeconds: number; orderIndex: number; }[] = parsed.exercises;
@@ -89,7 +90,7 @@ export default async function SessionPage({ params }: Props) {
             orderIndex: e.orderIndex,
           } as ExerciseEntry;
         });
-        planDayLabel = isFree ? "Custom Workout" : "Random Day";
+        planDayLabel = isFree ? (parsedWorkoutName ?? "Custom Workout") : "Random Day";
       }
     } catch {}
   }
