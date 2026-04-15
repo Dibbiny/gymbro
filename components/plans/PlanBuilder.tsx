@@ -229,7 +229,7 @@ export function PlanBuilder({ planId, initialData, redirectTo }: Props) {
                       "h-10 w-10 rounded-full text-sm font-medium transition-colors",
                       selectedDays.includes(i)
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        : "border border-border text-foreground hover:bg-muted"
                     )}
                   >
                     {name}
@@ -360,7 +360,7 @@ function DayEditor({
                 "shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                 muscleFilter === mg
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  : "border border-border text-foreground hover:bg-muted"
               )}
             >
               {mg === "ALL" ? "All" : mg}

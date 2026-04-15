@@ -76,7 +76,7 @@ export default async function PlansPage({ searchParams }: Props) {
           className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
             tab !== "exercises"
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              : "border border-border text-foreground hover:bg-muted"
           }`}
         >
           Plans
@@ -86,7 +86,7 @@ export default async function PlansPage({ searchParams }: Props) {
           className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
             tab === "exercises"
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              : "border border-border text-foreground hover:bg-muted"
           }`}
         >
           Exercises
@@ -144,7 +144,7 @@ export default async function PlansPage({ searchParams }: Props) {
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                     sort === opt.value
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      : "border border-border text-foreground hover:bg-muted"
                   }`}
                 >
                   {opt.label}

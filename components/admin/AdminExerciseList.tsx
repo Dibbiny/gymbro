@@ -74,7 +74,7 @@ export function AdminExerciseList({ exercises, label, dimmed }: Props) {
           onClick={() => setMuscleGroupFilters([])}
           className={cn(
             "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-            muscleGroupFilters.length === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+            muscleGroupFilters.length === 0 ? "bg-primary text-primary-foreground" : "border border-border text-foreground hover:bg-muted"
           )}
         >
           All
@@ -89,7 +89,7 @@ export function AdminExerciseList({ exercises, label, dimmed }: Props) {
             }
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              muscleGroupFilters.includes(mg) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+              muscleGroupFilters.includes(mg) ? "bg-primary text-primary-foreground" : "border border-border text-foreground hover:bg-muted"
             )}
           >
             {mg}

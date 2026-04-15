@@ -148,7 +148,7 @@ export default function RandomDayPage() {
                 "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
                 totalSets === n
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  : "border border-border text-foreground hover:bg-muted"
               )}
             >
               {n}

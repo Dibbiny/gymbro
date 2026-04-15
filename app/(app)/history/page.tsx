@@ -116,7 +116,7 @@ export default async function HistoryPage({ searchParams }: Props) {
             className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
               tab === t.value
                 ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                : "border border-border text-foreground hover:bg-muted"
             }`}
           >
             {t.label}

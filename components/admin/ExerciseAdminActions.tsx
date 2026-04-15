@@ -178,7 +178,7 @@ export function ExerciseAdminActions({ exercise }: Props) {
                       "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
                       selectedMovementTypes.includes(type)
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        : "border border-border text-foreground hover:bg-muted"
                     )}
                   >
                     {type}
@@ -199,7 +199,7 @@ export function ExerciseAdminActions({ exercise }: Props) {
                       "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
                       selectedMuscleGroups.includes(group)
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        : "border border-border text-foreground hover:bg-muted"
                     )}
                   >
                     {group}

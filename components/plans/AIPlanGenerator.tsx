@@ -92,7 +92,7 @@ export function AIPlanGenerator({ onGenerated }: Props) {
                 "h-9 w-9 rounded-full text-sm font-medium transition-colors",
                 daysPerWeek === d
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  : "border border-border text-foreground hover:bg-muted"
               )}
             >
               {d}
