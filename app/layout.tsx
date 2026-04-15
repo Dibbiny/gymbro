@@ -3,7 +3,8 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "next-auth/react";
-import NextTopLoader from "nextjs-toploader";
+import { Suspense } from "react";
+import { TopLoader } from "@/components/TopLoader";
 
 const geist = Geist({
   variable: "--font-sans",
@@ -31,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} h-full`}>
       <body className="min-h-full bg-background text-foreground antialiased">
-        <NextTopLoader color="var(--primary)" showSpinner={false} height={3} />
+        <Suspense><TopLoader /></Suspense>
         <SessionProvider>
           {children}
           <Toaster position="top-center" />
