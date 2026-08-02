@@ -5,7 +5,7 @@ import { StartSessionButton } from "@/components/training/StartSessionButton";
 import { UnenrollButton } from "@/components/training/UnenrollButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Dumbbell, Play, Plus, Shuffle } from "lucide-react";
+import { CheckCircle2, Dumbbell, Play, Plus, Shuffle, ClipboardList } from "lucide-react";
 
 export default async function TrainPage() {
   const session = await auth();
@@ -44,6 +44,12 @@ export default async function TrainPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Train</h1>
         <div className="flex items-center gap-2">
+          <Link
+            href="/plans"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 h-8 text-sm font-medium hover:bg-muted transition-colors"
+          >
+            <ClipboardList className="h-3.5 w-3.5" /> Plans
+          </Link>
           <Link
             href="/train/free"
             className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 h-8 text-sm font-medium hover:bg-muted transition-colors"

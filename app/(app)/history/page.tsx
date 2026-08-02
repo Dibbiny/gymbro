@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "@/lib/time";
 import { Calendar, Dumbbell, Clock, Trophy, Shuffle, Download, RotateCcw } from "lucide-react";
 import { ProgressCharts } from "@/components/history/ProgressCharts";
 import { MuscleHeatmap } from "@/components/history/MuscleHeatmap";
+import { WeeklySummary } from "@/components/history/WeeklySummary";
 import Link from "next/link";
 
 function formatDuration(seconds: number): string {
@@ -240,6 +241,7 @@ export default async function HistoryPage({ searchParams }: Props) {
       {/* Progress tab */}
       {tab === "progress" && (
         <div className="space-y-4">
+          <WeeklySummary />
           <MuscleHeatmap />
           {exercisesLogged.length === 0 ? (
             <div className="rounded-xl border border-dashed p-10 text-center space-y-2">

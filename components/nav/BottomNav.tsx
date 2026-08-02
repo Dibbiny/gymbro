@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Dumbbell, ClipboardList, Compass, User } from "lucide-react";
+import { Home, Dumbbell, TrendingUp, Compass, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/feed", label: "Feed", icon: Home },
-  { href: "/train", label: "Train", icon: Dumbbell },
-  { href: "/plans", label: "Plans", icon: ClipboardList },
-  { href: "/explore", label: "Explore", icon: Compass },
-  { href: "/profile", label: "Profile", icon: User },
+  { href: "/feed",     label: "Feed",     icon: Home },
+  { href: "/train",   label: "Train",    icon: Dumbbell },
+  { href: "/history?tab=progress", label: "Progress", icon: TrendingUp },
+  { href: "/explore", label: "Explore",  icon: Compass },
+  { href: "/profile", label: "Profile",  icon: User },
 ];
 
 export function BottomNav() {
@@ -21,7 +21,8 @@ export function BottomNav() {
       <div className="mx-auto max-w-lg">
         <div className="flex items-stretch">
           {navItems.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href || pathname.startsWith(href + "/");
+          const hrefPath = href.split("?")[0];
+            const isActive = pathname === hrefPath || pathname.startsWith(hrefPath + "/");
             return (
               <Link
                 key={href}
